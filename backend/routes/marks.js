@@ -73,7 +73,7 @@ router.post("/", async (req, res) => {
           subject: "📊 Marks Uploaded",
           text: `Dear Student,\n\nYour marks have been uploaded successfully. 
 Please log in to the student portal to view your detailed results.\n
-Click here: https://cse50-production-f95c.up.railway.app/\n\nRegards,\nCSE Department`,
+Click here: https://dams-production-36aa.up.railway.app/\n\nRegards,\nCSE Department`,
         });
       } catch (emailErr) {
         console.error("⚠️ SendGrid Error:", emailErr);
