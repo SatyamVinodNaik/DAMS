@@ -2,10 +2,10 @@ const mysql = require("mysql2/promise");
 
 // Create a MySQL connection pool
 const db = mysql.createPool({
-  host: process.env.DBHOST,
-  user: process.env.DBUSER,
-  password: process.env.DBPASSWORD,
-  database: process.env.DBNAME,
+  host: process.env.DBHOST||"127.0.0.1",
+  user: process.env.DBUSER||"root",
+  password: process.env.DBPASSWORD||"9035882709",
+  database: process.env.DBNAME||"department",
   port: process.env.DBPORT||19335,
   waitForConnections: true,
   connectionLimit: 10,
