@@ -322,7 +322,7 @@ app.get("/api/timetable/me", isAuth, async (req, res) => {
 
 
 // Initial DB population
-(async () => {
+/*(async () => {
   try {
     const students = JSON.parse(fs.readFileSync("student.json", "utf8"));
     for (const s of students) {
@@ -348,7 +348,7 @@ app.get("/api/timetable/me", isAuth, async (req, res) => {
   } catch (err) {
     console.error("❌ DB Error:", err);
   }
-})();
+})();*/
 
 // Profile API
 app.get("/api/profile", isAuth, async (req, res) => {
