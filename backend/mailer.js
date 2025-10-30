@@ -1,27 +1,27 @@
 const sgMail = require("@sendgrid/mail");
-require('dotenv').config();
+require("dotenv").config();
 
-
-// set API key (store in .env)
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const transporter = {
   async sendMail({ to, subject, text, html }) {
     try {
       const msg = {
-        to, // recipient email
-        from: { email: process.env.FROM_EMAIL, name: "CSE Department" },
-
+        to,
+        from: {
+          name: "CSE Department",
+          email: process.env.FROM_EMAIL,
+        },
         subject,
         text,
         html,
       };
 
-      const response = await sgMail.send(msg);
-      console.log("✅ Email sent:", response[0].statusCode);
+      const [response] = await sgMail.send(msg);
+      console.log("✅ Email sent:", response.statusCode);
       return response;
     } catch (error) {
-      console.error("❌ Error sending email:", error);
+      console.error("❌ SendGrid Error:", error);
       throw error;
     }
   },
