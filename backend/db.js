@@ -12,14 +12,6 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST || "ballast.proxy.rlwy.net",
-  port: process.env.DB_PORT || 19335,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "KJAmtjCVlJOYYmONvoMnGPGvqTnijJPM",
-  database: process.env.DB_NAME || "railway",
-});
-
 // ✅ Test connection on startup
 (async () => {
   try {
