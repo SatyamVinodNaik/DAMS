@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes & Resources</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff6a00, #ee0979);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .floating-symbol {
+            position: fixed;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+            animation: floatSymbol 10s infinite ease-in-out;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        @keyframes floatSymbol {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: translateY(-40px) rotate(10deg);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.8;
+            }
+        }
+
+        .note-card {
+            transition: transform 0.35s ease, box-shadow 0.35s ease, border 0.35s ease;
+        }
+
+        .note-card:hover {
+            transform: scale(1.08) translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(93, 0, 255, 0.6);
+            border: 2px solid rgba(93, 0, 255, 0.7);
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+
+<body class="text-gray-900 flex flex-col items-center p-4 sm:p-6 relative">
+
+    <!-- Floating Symbols -->
+    <div id="symbols"></div>
+
+    <div class="relative z-10 w-full max-w-4xl bg-white/20 backdrop-blur-xl p-6 sm:p-8 rounded-3xl shadow-2xl">
+        <div class="flex flex-col md:flex-row items-center md:justify-between">
+            <button onclick="goHome()"
+                class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg mb-4 md:mb-0">
+                ⬅ Back
+            </button>
+            <h1
+                class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white text-start drop-shadow-lg lg:mr-40 break-words">
+                📘 Notes & Resources
+            </h1>
+        </div>
+
+        <!-- Semester -->
+        <div class="mt-6">
+            <label class="font-semibold text-white">Select Semester:</label>
+            <select id="semester"
+                class="w-full p-3 mt-2 border-2 border-purple-300 rounded-lg bg-white/70 focus:ring-2 focus:ring-purple-500">
+                <option value="">-- Choose Semester --</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+            </select>
+        </div>
+
+        <!-- Section -->
+        <div class="mt-4">
+            <label class="font-semibold text-white">Select Section:</label>
+            <select id="section" disabled
+                class="w-full p-3 mt-2 border-2 border-purple-300 rounded-lg bg-gray-200 cursor-not-allowed">
+                <option value="">-- Choose Section --</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+        </div>
+
+        <!-- Subject -->
+        <div class="mt-4">
+            <label class="font-semibold text-white">Select Subject:</label>
+            <select id="subject" disabled
+                class="w-full p-3 mt-2 border-2 border-purple-300 rounded-lg bg-gray-200 cursor-not-allowed">
+                <option value="">-- Choose Subject --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Notes Grid -->
+    <div id="notesWrapper" class="relative z-10 mt-8 w-full max-w-6xl mb-12 px-2 sm:px-4">
+        <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"></div>
+        <div id="emptyMessage" class="hidden flex items-center justify-center h-[30vh]">
+            <div class="bg-red-100 text-red-700 px-6 py-3 rounded-lg shadow-lg text-base sm:text-lg font-bold">
+                🚫 No documents uploaded yet for this subject.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const symbolsContainer = document.getElementById("symbols");
+        const icons = ["📄", "📘", "📝", "📚", "✏️"];
+        for (let i = 0; i < 30; i++) {
+            const symbol = document.createElement("div");
+            symbol.classList.add("floating-symbol");
+            symbol.textContent = icons[Math.floor(Math.random() * icons.length)];
+            symbol.style.left = `${Math.random() * 100}vw`;
+            symbol.style.top = `${Math.random() * 100}vh`;
+            symbol.style.fontSize = `${Math.random() * 30 + 20}px`;
+            symbol.style.animationDuration = `${Math.random() * 8 + 6}s`;
+            symbol.style.animationDelay = `${Math.random() * 5}s`;
+            symbolsContainer.appendChild(symbol);
+        }
+
+        const semesterSelect = document.getElementById("semester");
+        const sectionSelect = document.getElementById("section");
+        const subjectSelect = document.getElementById("subject");
+        const notesList = document.getElementById("notesList");
+        const emptyMessage = document.getElementById("emptyMessage");
+
+        semesterSelect.addEventListener("change", () => {
+            sectionSelect.disabled = !semesterSelect.value;
+            sectionSelect.classList.toggle("bg-gray-200", !semesterSelect.value);
+            subjectSelect.disabled = true;
+            subjectSelect.classList.add("bg-gray-200");
+            subjectSelect.innerHTML = '<option value="">-- Choose Subject --</option>';
+            notesList.innerHTML = "";
+            emptyMessage.classList.add("hidden");
+        });
+
+        sectionSelect.addEventListener("change", async () => {
+            subjectSelect.innerHTML = '<option value="">-- Choose Subject --</option>';
+            notesList.innerHTML = "";
+            emptyMessage.classList.add("hidden");
+
+            const sem = semesterSelect.value;
+            if (!sem) return;
+
+            try {
+                const res = await fetch(`/api/notes/subjects?semester=${sem}`);
+                const subs = await res.json();
+
+                if (subs.length > 0) {
+                    subs.forEach(sub => {
+                        const option = document.createElement("option");
+                        option.value = sub.subject_code;
+                        option.textContent = sub.subject_name;
+                        subjectSelect.appendChild(option);
+                    });
+
+                    subjectSelect.disabled = false;
+                    subjectSelect.classList.remove("bg-gray-200");
+                } else {
+                    subjectSelect.disabled = true;
+                    subjectSelect.classList.add("bg-gray-200");
+                }
+            } catch (err) {
+                console.error("🔥 Error fetching subjects:", err);
+                alert("Failed to load subjects!");
+            }
+        });
+
+        subjectSelect.addEventListener("change", async () => {
+            const sem = semesterSelect.value;
+            const sec = sectionSelect.value;
+            const sub = subjectSelect.value;
+
+            notesList.innerHTML = "";
+            emptyMessage.classList.add("hidden");
+
+            if (sem && sec && sub) {
+                try {
+                    const res = await fetch(`/api/notes?semester=${sem}&section=${sec}&subject=${sub}`);
+                    const files = await res.json();
+
+                    if (files.length > 0) {
+                        files.forEach(note => {
+                            const card = document.createElement("div");
+                            card.className = "note-card bg-white/90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center";
+                            card.innerHTML = `
+                            <div class="text-5xl mb-3">📄</div>
+                            <p class="text-gray-800 font-semibold mb-2 text-center">${note.file_name}</p>
+                            <div class="flex gap-2 flex-wrap justify-center">
+                                <a href="/api/notes/${note.id}/download"
+                                   class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-indigo-700">
+                                   Download
+                                </a>
+                                <a href="/api/notes/${note.id}/preview" target="_blank"
+                                   class="bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700">
+                                   Preview
+                                </a>
+                            </div>
+                        `;
+                            notesList.appendChild(card);
+                        });
+                    } else {
+                        emptyMessage.classList.remove("hidden");
+                    }
+                } catch (err) {
+                    console.error("🔥 Error fetching notes:", err);
+                    alert("Failed to load notes!");
+                }
+            }
+        });
+
+        function goHome() {
+            window.location.href = "studentHome.html";
+        }
+    </script>
+
+</body>
+
+</html>

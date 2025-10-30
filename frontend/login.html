@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Login</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-r from-indigo-500 to-blue-500 min-h-screen flex items-center justify-center p-6">
+
+    <div class="bg-white rounded-2xl shadow-lg max-w-md w-full p-6">
+        <h1 class="text-2xl font-bold text-center mb-4">Department Login</h1>
+
+        <!-- Toggle Buttons -->
+        <div class="flex justify-center mb-6">
+            <button id="studentTab" class="w-1/2 py-2 text-white bg-blue-600 rounded-l-lg">Student</button>
+            <button id="facultyTab" class="w-1/2 py-2 bg-gray-200 rounded-r-lg">Faculty</button>
+        </div>
+
+        <!-- Student Login -->
+        <form id="studentLogin">
+            <input id="student-usn" type="text" placeholder="Enter USN" class="w-full p-3 border rounded-lg mb-3"
+                required>
+            <input id="student-pass" type="password" placeholder="Enter Password"
+                class="w-full p-3 border rounded-lg mb-3" required>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
+        </form>
+
+        <!-- Faculty Login -->
+        <form id="facultyLogin" class="hidden">
+            <input id="faculty-ssn" type="text" placeholder="Enter SSN" class="w-full p-3 border rounded-lg mb-3"
+                required>
+            <input id="faculty-pass" type="password" placeholder="Enter Password"
+                class="w-full p-3 border rounded-lg mb-3" required>
+            <button type="submit"
+                class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Login</button>
+        </form>
+
+        <!-- Error message -->
+        <p id="errorMsg" class="text-red-600 text-sm text-center mt-3 hidden"></p>
+
+        <!-- Forgot Password -->
+        <p class="text-sm text-center mt-4">
+            <a href="forgotPass.html" class="text-blue-600 hover:underline">Forgot Password?</a>
+        </p>
+        <p class="text-sm text-center mt-2">
+            <a href="admin-login.html" class="text-red-600 hover:underline font-semibold">Admin Panel</a>
+        </p>
+    </div>
+
+    <script>
+        // Tab Switching
+        const studentTab = document.getElementById("studentTab");
+        const facultyTab = document.getElementById("facultyTab");
+        const studentLogin = document.getElementById("studentLogin");
+        const facultyLogin = document.getElementById("facultyLogin");
+        const errorMsg = document.getElementById("errorMsg");
+
+        studentTab.addEventListener("click", () => {
+            studentLogin.classList.remove("hidden");
+            facultyLogin.classList.add("hidden");
+            studentTab.classList.add("bg-blue-600", "text-white");
+            facultyTab.classList.remove("bg-green-600", "text-white");
+            facultyTab.classList.add("bg-gray-200");
+        });
+
+        facultyTab.addEventListener("click", () => {
+            facultyLogin.classList.remove("hidden");
+            studentLogin.classList.add("hidden");
+            facultyTab.classList.add("bg-green-600", "text-white");
+            studentTab.classList.remove("bg-blue-600", "text-white");
+            studentTab.classList.add("bg-gray-200");
+        });
+
+        // Handle Student Login
+        studentLogin.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const usn = document.getElementById("student-usn").value;
+            const password = document.getElementById("student-pass").value;
+            await login("/api/student-login", { usn, password });
+        });
+
+        // Handle Faculty Login
+        facultyLogin.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const ssn_id = document.getElementById("faculty-ssn").value;
+            const password = document.getElementById("faculty-pass").value;
+            await login("/api/faculty-login", { ssn_id, password });
+        });
+
+        // Generic Login Function
+        async function login(url, credentials) {
+            errorMsg.classList.add("hidden");
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(credentials),
+                    credentials: "include"   // 👈 important for Railway
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorMsg.textContent = data.message;
+                    errorMsg.classList.remove("hidden");
+                }
+            } catch (err) {
+                errorMsg.textContent = "Server error. Try again.";
+                errorMsg.classList.remove("hidden");
+            }
+        }
+    </script>
+</body>
+
+</html>

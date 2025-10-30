@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Forgot Password</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white shadow-lg rounded-4xl p-6 lg:w-96 w-150 h-100">
+        <h2 class="text-5xl font-bold mb-15 text-center">Forgot Password</h2>
+
+        <!-- Step 1: Enter Email -->
+        <div id="step1">
+            <label class="block mb-6 text-3xl">Enter Registered Email:</label>
+            <input id="email" type="email" class="w-full border px-7 py-5 rounded-lg mb-4 text-3xl"
+                placeholder="you@gmail.com" required>
+            <button id="sendBtn" onclick="sendOtp()"
+                class="w-50 ml-45 mt-8 h-15 bg-blue-600 text-white text-2xl py-2 rounded-lg hover:bg-blue-700 flex justify-center items-center">
+                <span id="sendBtnText">Send OTP</span>
+                <svg id="loadingSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Step 2: Enter OTP + New Password -->
+        <div id="step2" class="bg-gray-100 p-5 text-2xl hidden w-150">
+            <label class="block mb-2">Enter OTP:</label>
+            <input id="otp" type="text" class="w-full border px-3 py-2 rounded-lg mb-4" placeholder="6-digit OTP"
+                required>
+
+            <label class="block mb-4">Enter New Password:</label>
+            <input id="newPassword" type="password" class="w-full border px-3 py-2 rounded-lg mb-6"
+                placeholder="New Password" required>
+
+            <button onclick="resetPassword()"
+                class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Reset Password</button>
+        </div>
+
+        <p id="message" class="mt-4 text-center text-sm font-semibold"></p>
+    </div>
+
+    <script>
+        async function sendOtp() {
+            const email = document.getElementById("email").value;
+            const sendBtn = document.getElementById("sendBtn");
+            const sendBtnText = document.getElementById("sendBtnText");
+            const spinner = document.getElementById("loadingSpinner");
+
+            // Show loading spinner
+            sendBtn.disabled = true;
+            sendBtnText.textContent = "Sending...";
+            spinner.classList.remove("hidden");
+
+            try {
+                const res = await fetch("/api/forgot-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await res.json();
+                document.getElementById("message").innerText = data.message;
+
+                if (res.ok) {
+                    document.getElementById("step1").classList.add("hidden");
+                    document.getElementById("step2").classList.remove("hidden");
+                }
+            } catch (err) {
+                document.getElementById("message").innerText = "❌ Error sending OTP. Try again.";
+            }
+
+            // Reset button
+            sendBtn.disabled = false;
+            sendBtnText.textContent = "Send OTP";
+            spinner.classList.add("hidden");
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById("email").value;
+            const otp = document.getElementById("otp").value;
+            const newPassword = document.getElementById("newPassword").value;
+
+            const res = await fetch("/api/reset-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp, newPassword })
+            });
+
+            const data = await res.json();
+            document.getElementById("message").innerText = data.message;
+
+            if (res.ok) {
+                setTimeout(() => {
+                    window.location.href = "/"; // redirect to login page
+                }, 2000);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

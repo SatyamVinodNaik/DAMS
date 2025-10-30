@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Portal</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #111827;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+        .year-box {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .year-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #marks-modal main {
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+    </style>
+</head>
+
+<body class="font-sans p-4 text-white">
+    <!-- Back Button -->
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white text-sm font-bold w-15 lg:w-25 lg:ml-10 lg:py-2 lg:px-6 mt-5 h-10 rounded-full shadow-lg">
+        Back</button>
+
+    <!-- Header -->
+    <header class="my-4 flex flex-col items-center text-center">
+        <h1 class="text-2xl lg:text-4xl font-bold">Student Performance Portal</h1>
+        <div class="flex justify-between items-center w-full max-w-md mt-7 ml-15 lg:ml-17" id="usn-container">
+            <input id="usnInput" type="text" placeholder="Enter USN"
+                class="border p-3 rounded-lg w-2/3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+            <button id="fetchBtn" class="bg-cyan-500 text-white px-4 py-3 rounded-lg hover:bg-cyan-600 mr-12 lg:mr-15">
+                Search
+            </button>
+        </div>
+    </header>
+
+    <!-- Overall CGPA -->
+    <div class="relative w-full max-w-4xl mt-2 mx-auto">
+        <div style="width:200px; margin:auto;" class="p-4 bg-white/10 border border-white/20 rounded-lg text-center">
+            <span class="text-sm block text-gray-300">Overall CGPA</span>
+            <span id="cgpa-value" class="text-3xl font-bold text-cyan-400">0.00</span>
+        </div>
+    </div>
+
+    <!-- Year Grid -->
+    <div id="year-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto mt-5"></div>
+
+    <!-- Marks Modal -->
+    <div id="marks-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+        <div
+            class="bg-gray-800 border border-white/20 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col">
+            <header class="flex justify-between items-center p-4 border-b border-white/20">
+                <h2 id="marks-title" class="text-2xl font-bold">Semester Results</h2>
+                <button id="close-modal-btn" class="text-3xl text-gray-400 hover:text-white">&times;</button>
+            </header>
+            <main class="p-6">
+                <table class="w-full text-left">
+                    <thead class="border-b-2 border-white/20">
+                        <tr>
+                            <th class="p-3">Code</th>
+                            <th class="p-3">Subject</th>
+                            <th class="p-3 text-center">Internal</th>
+                            <th class="p-3 text-center">External</th>
+                            <th class="p-3 text-center">Total</th>
+                            <th class="p-3 text-center">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marks-table-body"></tbody>
+                </table>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function getGradePoint(total) {
+            if (total >= 90) return 10;
+            if (total >= 80) return 9;
+            if (total >= 70) return 8;
+            if (total >= 60) return 7;
+            if (total >= 50) return 6;
+            if (total >= 40) return 5;
+            return 0;
+        }
+
+        async function saveSGPACGPA(usn, semester, sgpa, cgpa) {
+            try {
+                const res = await fetch("/api/marks/saveSgpaCgpa", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usn, semester, sgpa, cgpa })
+                });
+                if (!res.ok) throw new Error("Failed to save SGPA/CGPA");
+                console.log("SGPA & CGPA saved!");
+            } catch (err) {
+                console.error("Failed to save SGPA & CGPA:", err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const yearGrid = document.getElementById('year-grid');
+            const cgpaValue = document.getElementById('cgpa-value');
+            const marksModal = document.getElementById('marks-modal');
+            const marksTableBody = document.getElementById('marks-table-body');
+            const marksTitle = document.getElementById('marks-title');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const fetchBtn = document.getElementById('fetchBtn');
+            const usnInput = document.getElementById('usnInput');
+            const usnContainer = document.getElementById('usn-container');
+
+            let loggedInUsn = null;
+            let subjects = [];
+
+            // Check student session
+            try {
+                const res = await fetch("/api/marks/me", { credentials: "include" });
+                if (res.ok) {
+                    const data = await res.json();
+                    loggedInUsn = data.usn;
+                }
+            } catch (err) { }
+
+            // Show/hide USN input
+            if (loggedInUsn) {
+                usnContainer.style.display = 'none';
+                await loadStudentData(loggedInUsn);
+            } else {
+                usnContainer.style.display = 'flex';
+                fetchBtn.addEventListener('click', async () => {
+                    const usn = usnInput.value.trim();
+                    if (!usn) {
+                        yearGrid.innerHTML = `<p class="text-red-400 text-center">⚠️ Please enter a USN</p>`;
+                        return;
+                    }
+                    await loadStudentData(usn);
+                });
+            }
+
+            async function loadStudentData(usn) {
+                yearGrid.innerHTML = `<p class="text-gray-300 text-center">Loading...</p>`;
+                try {
+                    const response = await fetch(`/api/marks/${usn}`);
+                    if (!response.ok) throw new Error('No marks found for this student');
+                    const data = await response.json();
+                    subjects = data.subjects;
+
+                    // CGPA Calculation
+                    let totalCreditsAll = 0, totalPointsAll = 0;
+                    subjects.forEach(s => {
+                        if (s.result === 'P') {
+                            const credits = Number(s.credit) || 0;
+                            totalCreditsAll += credits;
+                            totalPointsAll += credits * getGradePoint(s.total);
+                        }
+                    });
+                    const cgpa = totalCreditsAll > 0 ? (totalPointsAll / totalCreditsAll).toFixed(2) : "0.00";
+                    cgpaValue.textContent = cgpa;
+
+                    // Render year grid
+                    const semestersWithData = new Set(subjects.map(s => s.semester));
+                    const semestersByYear = { 1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8] };
+
+                    yearGrid.innerHTML = '';
+                    for (const year in semestersByYear) {
+                        const yearBox = document.createElement('div');
+                        yearBox.className = 'year-box p-6 bg-white/10 border border-white/20 rounded-lg text-white';
+
+                        let semesterButtonsHTML = '';
+                        semestersByYear[year].forEach(sem => {
+                            const isAvailable = semestersWithData.has(sem);
+                            const btnClass = isAvailable
+                                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50';
+                            const btnText = isAvailable ? `Sem ${sem}` : `Sem ${sem} 🔒`;
+
+                            semesterButtonsHTML += `<button class="sem-btn m-2 px-4 py-2 rounded-md transition ${btnClass}" data-sem="${sem}" ${!isAvailable ? 'disabled' : ''}>${btnText}</button>`;
+                        });
+
+                        yearBox.innerHTML = `<h2 class="text-2xl text-center font-bold">Year ${year}</h2>
+                        <div class="mt-4 flex justify-center items-center flex-wrap">${semesterButtonsHTML}</div>`;
+                        yearGrid.appendChild(yearBox);
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    yearGrid.innerHTML = `<p class="text-red-400 text-center">Error: ${error.message}</p>`;
+                    cgpaValue.textContent = "0.00";
+                }
+            }
+
+            // Event delegation for semester buttons
+            yearGrid.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.sem-btn');
+                if (!btn) return;
+                const semester = parseInt(btn.dataset.sem);
+                const semesterSubjects = subjects.filter(s => s.semester === semester);
+
+                // SGPA Calculation
+                let totalCredits = 0, totalPoints = 0;
+                semesterSubjects.forEach(s => {
+                    const credits = Number(s.credit) || 0;
+                    totalCredits += credits;
+                    totalPoints += credits * getGradePoint(s.total);
+                });
+                const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+
+                // CGPA Calculation (overall)
+                let totalCreditsAll = 0, totalPointsAll = 0;
+                subjects.forEach(s => {
+                    if (s.result === 'P') {
+                        const credits = Number(s.credit) || 0;
+                        totalCreditsAll += credits;
+                        totalPointsAll += credits * getGradePoint(s.total);
+                    }
+                });
+                const cgpa = totalCreditsAll > 0 ? (totalPointsAll / totalCreditsAll).toFixed(2) : "0.00";
+                cgpaValue.textContent = cgpa;
+
+                // Save SGPA & CGPA in database
+                const usn = usnInput.value || loggedInUsn;
+                await saveSGPACGPA(usn, semester, sgpa, cgpa);
+
+                // Update modal
+                marksTitle.innerHTML = `Semester ${semester} Results 
+                    <span class="ml-4 px-3 py-1 bg-cyan-500 text-white text-sm rounded-lg">SGPA: ${sgpa}</span>`;
+
+                marksTableBody.innerHTML = '';
+                semesterSubjects.forEach(subject => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-white/10 last:border-b-0';
+                    row.innerHTML = `
+                        <td class="p-3">${subject.subject_code}</td>
+                        <td class="p-3 font-medium">${subject.subject_name}</td>
+                        <td class="p-3 text-center">${subject.internal}</td>
+                        <td class="p-3 text-center">${subject.external}</td>
+                        <td class="p-3 text-center font-bold">${subject.total}</td>
+                        <td class="p-3 text-center font-bold ${subject.result === 'P' ? 'text-green-400' : 'text-red-400'}">${subject.result}</td>
+                    `;
+                    marksTableBody.appendChild(row);
+                });
+
+                marksModal.classList.remove('hidden');
+            });
+
+            // Close modal
+            closeModalBtn.addEventListener('click', () => marksModal.classList.add('hidden'));
+            marksModal.addEventListener('click', e => {
+                if (e.target === marksModal) marksModal.classList.add('hidden');
+            });
+
+        });
+
+        async function goHome() {
+            try {
+                const res = await fetch("/api/marks/me", { credentials: "include" });
+                if (res.ok) {
+                    window.location.href = "studentHome.html";
+                } else {
+                    window.location.href = "home.html";
+                }
+            } catch {
+                window.location.href = "home.html";
+            }
+        }
+    </script>
+</body>
+
+</html>

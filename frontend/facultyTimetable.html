@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Timetable</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-6">
+
+    <div class="max-w-lg mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Upload Timetable PDF</h1>
+
+        <form id="timetableForm">
+            <label class="block mb-2">Semester:</label>
+            <input type="text" name="semester" class="border p-2 w-full mb-4 rounded" required>
+
+            <label class="block mb-2">Section:</label>
+            <input type="text" name="section" class="border p-2 w-full mb-4 rounded" required>
+
+            <label class="block mb-2">PDF File:</label>
+            <input type="file" name="timetable" accept="application/pdf" class="mb-4" required>
+
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Upload</button>
+        </form>
+
+        <div id="message" class="mt-4 text-green-600 font-semibold"></div>
+    </div>
+
+    <script>
+        document.getElementById("timetableForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch("/api/timetable/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await res.json();
+                document.getElementById("message").textContent = result.message || result.error;
+            } catch (err) {
+                console.error(err);
+                document.getElementById("message").textContent = "Upload failed.";
+            }
+            if (data.message) location.reload();
+        });
+    </script>
+
+</body>
+
+</html>

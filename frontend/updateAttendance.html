@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Attendance</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="faculty-page"
+        class="h-screen bg-gradient-to-br from-indigo-600 via-pink-500 to-purple-500 overflow-auto p-6">
+        <div class="mb-8 flex flex-col justify-between items-center">
+            <button onclick="goHome()"
+                class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg mr-68 md:mr-330">⬅
+                Back</button>
+            <h1 class="text-3xl font-bold text-white animate-pulse text-center flex-1">Attendance <br>
+                Management</h1>
+        </div>
+
+        <div class="flex justify-center mt-10">
+            <div class="bg-white/20 backdrop-blur-xl p-10 rounded-3xl shadow-2xl max-w-lg w-full">
+                <form id="attendance-form" class="space-y-6">
+
+                    <p id="form-message" class="text-center font-semibold mb-4"></p>
+
+                    <form id="attendance-form" class="space-y-6">
+
+                        <!-- Date -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Date:</label>
+                            <input type="date" id="attendance-date" class="border rounded-lg w-full p-3 bg-white"
+                                required>
+                        </div>
+
+                        <!-- Semester -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Semester:</label>
+                            <select id="semester" class="border rounded-lg w-full p-3 bg-white" required>
+                                <option value="">Select Semester</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+
+                        <!-- Section -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Section:</label>
+                            <select id="section" class="border rounded-lg w-full p-3 bg-white" required>
+                                <option value="">Select Section</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Subject Code:</label>
+                            <select id="subject-code" class="border rounded-lg w-full p-3 bg-white" required>
+                                <option value="">Select Subject</option>
+                            </select>
+                        </div>
+
+                        <!-- Number of Hours -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Number of Hours:</label>
+                            <input type="number" id="hours" class="border rounded-lg w-full p-3 bg-white" min="1"
+                                value="1" required>
+                        </div>
+
+                        <!-- Absentees -->
+                        <div>
+                            <label class="block font-semibold mb-2 text-white">Enter Absentees USNs
+                                (comma-separated):</label>
+                            <textarea id="absentees" class="border rounded-lg w-full p-3 bg-white"
+                                placeholder="4CB25CS001, 4CB25CS005"></textarea>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="flex justify-center">
+                            <button type="submit"
+                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg">
+                                Submit
+                            </button>
+                        </div>
+
+                    </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const semSelect = document.getElementById('semester');
+        const subjSelect = document.getElementById('subject-code');
+        const messageEl = document.getElementById('form-message'); // 🔹 Reference message element
+
+        // 🔹 Fetch subjects dynamically
+        semSelect.addEventListener('change', async () => {
+            const semester = parseInt(semSelect.value);
+            if (!semester) return;
+
+            try {
+                const res = await fetch(`/api/attendance/semester-subjects?semester=${semester}`);
+                const data = await res.json();
+                subjSelect.innerHTML = '<option value="">Select Subject</option>';
+                data.forEach(sub => {
+                    subjSelect.innerHTML += `<option value="${sub.subject_code}">${sub.subject_code} - ${sub.subject_name}</option>`;
+                });
+            } catch (err) {
+                console.error("Error fetching subjects:", err);
+            }
+        });
+
+        // 🔹 Submit attendance
+        document.getElementById('attendance-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Clear old message
+            messageEl.textContent = "";
+            messageEl.className = "text-center font-semibold mb-4";
+
+            const subjectCode = subjSelect.value;
+            const semester = document.getElementById('semester').value;
+            const section = document.getElementById('section').value;
+            const hours = parseInt(document.getElementById('hours').value);
+            const absentees = document.getElementById('absentees').value
+                .split(",")
+                .map(u => u.trim())
+                .filter(u => u !== "");
+            const date = document.getElementById('attendance-date').value;
+
+            try {
+                const res = await fetch('/api/attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subjectCode, semester, section, absentees, date, hours })
+                });
+
+                const msg = await res.json();
+
+                if (res.ok) {
+                    messageEl.textContent = msg.message || "Attendance updated successfully!";
+                    messageEl.classList.add("text-green-500");
+                    setTimeout(() => {
+                        messageEl.textContent = "";
+                    }, 3000); // hides after 3 seconds
+
+                    document.getElementById('absentees').value = '';
+                    document.getElementById('hours').value = '1';
+                } else {
+                    messageEl.textContent = msg.error || "Something went wrong!";
+                    messageEl.classList.add("text-red-500");
+                    setTimeout(() => {
+                        messageEl.textContent = "";
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error("Error submitting attendance:", err);
+                messageEl.textContent = "An unexpected error occurred!";
+                messageEl.classList.add("text-red-500");
+            }
+        });
+
+        function goHome() {
+            window.location.href = "facultyHome.html";
+        }
+    </script>
+
+</body>
+
+</html>

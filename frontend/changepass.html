@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Password</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white shadow-lg rounded-xl p-8 w-96">
+        <h2 class="text-2xl font-bold mb-6 text-center">Change Password</h2>
+
+        <form id="changePassForm">
+            <div class="mb-4">
+                <label class="block mb-1 text-sm">Old Password</label>
+                <input type="password" name="oldPassword" required class="w-full border px-3 py-2 rounded">
+            </div>
+            <div class="mb-4">
+                <label class="block mb-1 text-sm">New Password</label>
+                <input type="password" name="newPassword" required class="w-full border px-3 py-2 rounded">
+            </div>
+            <div class="mb-4">
+                <label class="block mb-1 text-sm">Confirm New Password</label>
+                <input type="password" name="confirmPassword" required class="w-full border px-3 py-2 rounded">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                Update Password
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById("changePassForm");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const { oldPassword, newPassword, confirmPassword } = Object.fromEntries(formData.entries());
+
+            if (newPassword !== confirmPassword) {
+                alert("New passwords do not match ❌");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/change-password", {   // ✅ relative path
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+
+                const result = await res.json();
+                alert(result.message);
+
+                if (res.ok) {
+                    // ✅ Redirect after success
+                    window.location.href = "/faculty-home";
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error contacting server");
+            }
+        });
+    </script>
+</body>
+
+</html>

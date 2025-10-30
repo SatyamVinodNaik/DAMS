@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Publish Announcement</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body
+    class="bg-gradient-to-br from-indigo-600 via-purple-600 to-green-500 min-h-screen flex items-center justify-center p-4">
+
+    <div
+        class="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 md:p-10">
+
+        <div class="mb-4">
+            <button onclick="goHome()"
+                class="bg-gray-800 hover:bg-black text-white text-sm sm:text-base md:text-lg lg:text-xl font-bold py-2 px-4 sm:px-6 rounded-full shadow-lg">
+                ⬅ Back
+            </button>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-center text-indigo-700 mb-6 tracking-wide">
+            📢 Publish New Announcement
+        </h1>
+
+        <form id="announcementForm" class="space-y-6" enctype="multipart/form-data">
+
+            <div>
+                <label for="faculty_id" class="block text-gray-700 font-semibold mb-2">Faculty ID</label>
+                <input type="text" id="faculty_id" name="faculty_id" required
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+
+            <div>
+                <label for="type" class="block text-gray-700 font-semibold mb-2">Announcement Type</label>
+                <select id="type" name="type" required
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="" disabled selected>Select Type</option>
+                    <option value="Placement">Placement</option>
+                    <option value="Result">Result</option>
+                    <option value="Events">Events</option>
+                    <option value="Alerts">Alerts</option>
+                    <option value="General">General</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="title" class="block text-gray-700 font-semibold mb-2">Title</label>
+                <input type="text" id="title" name="title" required
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+
+            <div>
+                <label for="message" class="block text-gray-700 font-semibold mb-2">Message</label>
+                <textarea id="message" name="message" rows="4"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+            </div>
+
+            <div class="flex items-center space-x-3 p-3 bg-yellow-100 rounded-lg border border-yellow-300">
+                <input type="checkbox" id="is_marquee" name="is_marquee"
+                    class="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                <label for="is_marquee" class="text-gray-800 font-bold flex items-center cursor-pointer">
+                    <span class="text-xl mr-2">🚨</span>
+                    Display as **Marquee/Ticker** (Scrolling Alert)
+                </label>
+            </div>
+            <div>
+                <label for="file" class="block text-gray-700 font-semibold mb-2">Attachment (optional)</label>
+                <input type="file" id="file" name="file"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+
+            <button type="submit"
+                class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-indigo-700 transition transform hover:-translate-y-0.5">
+                🚀 Publish Announcement
+            </button>
+        </form>
+
+        <div id="status" class="mt-6 text-center font-medium"></div>
+    </div>
+
+    <script>
+        document.getElementById("announcementForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+
+            // Append file_type if a file is selected
+            const fileInput = document.getElementById("file");
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                formData.append("file_type", file.type);
+            }
+
+            // NEW: Manually check and append the 'is_marquee' value
+            const isMarquee = document.getElementById("is_marquee").checked;
+            // The server-side logic will receive 'on' or nothing. 
+            // If you want a boolean: formData.append("is_marquee", isMarquee ? "true" : "false");
+
+            // NOTE: Since the checkbox is already in the form and has a 'name' attribute, 
+            // FormData(e.target) *will* include it with the value 'on' if checked, 
+            // and simply *omit* it if unchecked. This is the standard behavior for checkboxes in a FormData object.
+            // If you need it to always be present (e.g., 'true' or 'false'), 
+            // you should manually check and append it like this, overriding the default if needed:
+            // if (!isMarquee) { formData.append("is_marquee", "false"); }
+
+
+            try {
+                const res = await fetch("/api/announcements", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    document.getElementById("status").innerHTML =
+                        `<p class="text-green-600">✅ ${result.message}</p>`;
+                    e.target.reset();
+                } else {
+                    document.getElementById("status").innerHTML =
+                        `<p class="text-red-600">❌ ${result.error || "Failed to publish"}</p>`;
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById("status").innerHTML =
+                    `<p class="text-red-600">⚠️ Error connecting to server</p>`;
+            }
+        });
+
+        function goHome() {
+            window.location.href = "facultyHome.html";
+        }
+    </script>
+</body>
+
+</html>

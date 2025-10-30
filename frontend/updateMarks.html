@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Marks Entry</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+    <style>
+        body {
+            background: #8B0000;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 0, 0.4) 0%, transparent 70%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 0, 0.4) 0%, transparent 70%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-4">
+    <div
+        class="container mx-auto my-10 p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl shadow-2xl max-w-5xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Admin Marks Portal</h1>
+            <p class="text-gray-600">Enter student marks and save them to the database.</p>
+        </header>
+
+        <button onclick="goHome()"
+            class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg">⬅ Back</button>
+
+        <form id="marks-form" class="space-y-6 mt-20">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <select id="department" name="department"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        required>
+                        <option value="CSE">CSE</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="usn" class="block text-sm font-medium text-gray-700 mb-1">Student USN</label>
+                    <input type="text" id="usn" name="usn" placeholder="e.g., 4CB23CS100"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        required />
+                </div>
+                <div>
+                    <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                    <select id="semester" name="semester"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        required>
+                        <option value="" disabled selected>Select Semester</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option>
+                        <option value="8">Semester 8</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="subjects-container" class="space-y-4 pt-4 border-t">
+                <p id="subjects-placeholder" class="text-gray-500 text-center py-4">
+                    Please select a department and semester to see the subjects.
+                </p>
+            </div>
+
+            <div class="flex justify-end items-center gap-4 pt-4 border-t">
+                <button type="button" id="edit-btn"
+                    class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 hidden transition text-lg">
+                    Edit Marks
+                </button>
+                <span id="form-message" class="text-sm font-medium"></span>
+                <button type="submit" id="submit-btn"
+                    class="bg-rose-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-rose-700 disabled:bg-gray-400 transition text-lg">
+                    Save All Marks
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("marks-form");
+            const departmentSelect = document.getElementById("department");
+            const semesterSelect = document.getElementById("semester");
+            const subjectsContainer = document.getElementById("subjects-container");
+            const submitBtn = document.getElementById("submit-btn");
+            const editBtn = document.getElementById("edit-btn");
+            const formMessage = document.getElementById("form-message");
+
+            let marksLocked = false;
+
+            const calculateResult = (internal, external) => {
+                const total = internal + external;
+                return internal >= 20 && external >= 18 && total >= 40 ? "P" : "F";
+            };
+
+            const updateSubjectRow = (row) => {
+                const cie1 = parseFloat(row.querySelector(".cie1")?.value) || 0;
+                const cie2 = parseFloat(row.querySelector(".cie2")?.value) || 0;
+                const lab = parseFloat(row.querySelector(".lab")?.value) || 0;
+                const assignment = parseFloat(row.querySelector(".assessment")?.value) || 0;
+                const external = parseFloat(row.querySelector(".external-marks")?.value) || 0;
+                const isLab = row.querySelector(".is-lab-check")?.checked || false;
+
+                let cieScaled = isLab
+                    ? Math.ceil(((cie1 + cie2) / 50) * 15)
+                    : Math.ceil(((cie1 + cie2) / 50) * 25);
+
+                const internal = cieScaled + lab + assignment;
+                const total = internal + external;
+
+                const result = calculateResult(internal, external);
+
+                row.querySelector(".internal-total").textContent = internal.toFixed(2);
+                row.querySelector(".total-marks").textContent = total.toFixed(2);
+                const resultEl = row.querySelector(".final-result");
+                resultEl.textContent = result;
+                resultEl.className = `final-result font-bold text-lg ${result === "P" ? "text-green-600" : "text-red-500"}`;
+            };
+
+            const showMessage = (message, isError = false) => {
+                formMessage.textContent = message;
+                formMessage.className = `text-sm font-medium ${isError ? "text-red-600" : "text-green-600"}`;
+                setTimeout(() => (formMessage.textContent = ""), 3000);
+            };
+
+            const setFieldsDisabled = (disabled) => {
+                document.querySelectorAll(".subject-card input").forEach(inp => inp.disabled = disabled);
+                submitBtn.disabled = disabled;
+                editBtn.classList.toggle("hidden", !disabled);
+            };
+
+            // Grade point calculation for SGPA
+            const getGradePoint = (total) => {
+                if (total >= 90) return 10;
+                if (total >= 80) return 9;
+                if (total >= 70) return 8;
+                if (total >= 60) return 7;
+                if (total >= 50) return 6;
+                if (total >= 40) return 5;
+                return 0;
+            };
+
+            // Save SGPA and CGPA
+            const saveSGPACGPA = async (usn, semester, subjects) => {
+                let totalCredits = 0, totalPoints = 0;
+                subjects.forEach(s => {
+                    const credits = Number(s.credit) || 4; // default credit per subject
+                    if (s.result === "P") {
+                        totalCredits += credits;
+                        totalPoints += credits * getGradePoint(s.total);
+                    }
+                });
+                const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+
+                try {
+                    const res = await fetch("/api/marks/saveSgpaCgpa", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            usn: data.usn,
+                            semester: data.semester,
+                            sgpa: sgpaCalculated
+                        })
+                    });
+
+                    if (!res.ok) throw new Error("Failed to save SGPA/CGPA");
+                    const data = await res.json();
+                    console.log("SGPA & CGPA saved!", data);
+                    return data.cgpa; // cumulative CGPA
+                } catch (err) {
+                    console.error(err);
+                    return null;
+                }
+            };
+
+            const populateSubjects = async () => {
+                const department = departmentSelect.value;
+                const semester = semesterSelect.value;
+                const usn = document.getElementById("usn").value.trim();
+                subjectsContainer.innerHTML = "";
+
+                if (!department || !semester || !usn) {
+                    subjectsContainer.innerHTML =
+                        '<p class="text-gray-500 text-center py-4">Please fill all fields to see subjects.</p>';
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/subjects/${department}/${semester}`);
+                    const subjects = await res.json();
+
+                    let existingMarks = {};
+                    let hasExistingMarks = false;
+                    const marksRes = await fetch(`/api/marks/${usn}?semester=${semester}`);
+                    if (marksRes.ok) {
+                        const marksData = await marksRes.json();
+                        if (marksData.subjects?.length) {
+                            existingMarks = Object.fromEntries(
+                                marksData.subjects.map((m) => [m.subject_code, m])
+                            );
+                            hasExistingMarks = true;
+                        }
+                    }
+
+                    marksLocked = hasExistingMarks;
+
+                    if (subjects.length === 0) {
+                        subjectsContainer.innerHTML =
+                            '<p class="text-gray-500 text-center py-4">No subjects found.</p>';
+                        return;
+                    }
+
+                    subjects.forEach((subject) => {
+                        const prev = existingMarks[subject.subject_code] || {};
+                        const card = document.createElement("div");
+                        card.className = "subject-card bg-gray-50 p-4 rounded-lg border";
+                        card.innerHTML = `
+                    <input type="hidden" class="subject-code" value="${subject.subject_code}">
+                    <input type="hidden" class="subject-name" value="${subject.subject_name}">
+                    <input type="hidden" class="credit" value="${subject.credit || 4}">
+                    <div class="flex flex-wrap justify-between items-center mb-3">
+                        <div>
+                            <p class="font-bold text-gray-800">${subject.subject_name}</p>
+                            <p class="text-sm text-gray-500">${subject.subject_code}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-600">INTERNAL (50)</p>
+                                <p class="internal-total font-bold text-lg text-gray-800">${prev.internal?.toFixed?.(2) || "0.00"}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-600">TOTAL (100)</p>
+                                <p class="total-marks font-bold text-lg text-blue-600">${prev.total?.toFixed?.(2) || "0.00"}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-600">RESULT</p>
+                                <p class="final-result font-bold text-lg ${prev.result === "P" ? "text-green-600" : "text-red-500"}">${prev.result || "F"}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 pt-3 border-t">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">CIE 1 (25)</label>
+                            <input type="number" class="cie1 w-full p-2 border rounded-md text-center" min="0" max="25" value="${prev.cie1 || ""}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">CIE 2 (25)</label>
+                            <input type="number" class="cie2 w-full p-2 border rounded-md text-center" min="0" max="25" value="${prev.cie2 || ""}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Lab (25)</label>
+                            <input type="number" class="lab w-full p-2 border rounded-md text-center" min="0" max="50" value="${prev.lab || ""}">
+                        </div>
+                        <div class="flex items-center gap-2 mt-2 md:mt-0">
+                            <input type="checkbox" class="is-lab-check" ${prev.is_lab ? "checked" : ""}>
+                            <label class="text-xs font-medium text-gray-600">Lab Course?</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Assignment</label>
+                            <input type="number" class="assessment w-full p-2 border rounded-md text-center" min="0" max="100" value="${prev.assignment || ""}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">External (50)</label>
+                            <input type="number" class="external-marks w-full p-2 border rounded-md text-center" min="0" max="50" value="${prev.external || ""}">
+                        </div>
+                    </div>
+                `;
+                        card.querySelectorAll("input[type='number'], .is-lab-check").forEach((input) =>
+                            input.addEventListener("input", () => updateSubjectRow(card))
+                        );
+
+                        subjectsContainer.appendChild(card);
+
+                        if (prev.cie1 || prev.cie2 || prev.lab || prev.assignment || prev.external) {
+                            updateSubjectRow(card);
+                        }
+                    });
+
+                    setFieldsDisabled(hasExistingMarks);
+                } catch (error) {
+                    console.error(error);
+                    subjectsContainer.innerHTML =
+                        '<p class="text-red-500 text-center py-4">Error loading subjects</p>';
+                }
+            };
+
+            departmentSelect.addEventListener("change", populateSubjects);
+            semesterSelect.addEventListener("change", populateSubjects);
+            document.getElementById("usn").addEventListener("blur", populateSubjects);
+
+            editBtn.addEventListener("click", () => {
+                marksLocked = false;
+                setFieldsDisabled(false);
+                alert("Editing enabled. You can now modify marks.");
+            });
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Saving...";
+
+                const data = {
+                    department: form.department.value,
+                    usn: form.usn.value,
+                    semester: form.semester.value,
+                    subjects: Array.from(document.querySelectorAll(".subject-card")).map((row) => ({
+                        code: row.querySelector(".subject-code").value,
+                        name: row.querySelector(".subject-name").value,
+                        cie1: parseFloat(row.querySelector(".cie1").value) || 0,
+                        cie2: parseFloat(row.querySelector(".cie2").value) || 0,
+                        lab: parseFloat(row.querySelector(".lab").value) || 0,
+                        isLab: row.querySelector(".is-lab-check")?.checked || false,
+                        assignment: parseFloat(row.querySelector(".assessment").value) || 0,
+                        external: parseFloat(row.querySelector(".external-marks").value) || 0,
+                        internal: parseFloat(row.querySelector(".internal-total").textContent) || 0,
+                        total: parseFloat(row.querySelector(".total-marks").textContent) || 0,
+                        result: row.querySelector(".final-result").textContent || "F",
+                        credit: parseFloat(row.querySelector(".credit")?.value) || 4
+                    })),
+                };
+
+                try {
+                    const response = await fetch("/api/marks", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    });
+                    if (!response.ok) throw new Error((await response.json()).message || "Failed to save marks");
+
+                    // Save SGPA & get cumulative CGPA
+                    const cgpaCumulative = await saveSGPACGPA(data.usn, data.semester, data.subjects);
+                    if (cgpaCumulative) alert(`Marks saved successfully! Cumulative CGPA: ${cgpaCumulative}`);
+                    else alert("Marks saved, but failed to save SGPA/CGPA.");
+
+                    marksLocked = true;
+                    setFieldsDisabled(true);
+                } catch (error) {
+                    console.error("Submit Error:", error);
+                    showMessage(error.message, true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Save Marks";
+                }
+            });
+
+            function goHome() {
+                window.location.href = "facultyHome.html";
+            }
+        });
+    </script>
+
+</body>
+
+</html>
