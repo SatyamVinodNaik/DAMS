@@ -40,15 +40,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("src"));
 
 const sessionStore = new MySQLStore({
-  host: '127.0.0.1',        // use 127.0.0.1 (avoids socket issues on Windows)
-  port: 3306,               // ✅ correct MySQL port
-  user: 'root',
-  password: '9035882709',
-  database: 'department',
+  host: process.env.DBHOST || '127.0.0.1',
+  port: process.env.DBPORT ? parseInt(process.env.MYSQL_PORT) : 3306,
+  user: process.env.DBUSER || 'root',
+  password: process.env.DBPASSWORD || '9035882709',
+  database: process.env.DBNAME || 'department',
   clearExpired: true,
   checkExpirationInterval: 900000,  // 15 mins
   expiration: 1000 * 60 * 60 * 24 * 7, // 7 days
 });
+
 
 const upload = multer({ 
   storage,
