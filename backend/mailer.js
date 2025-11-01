@@ -10,7 +10,7 @@ const transporter = {
         to,
         from: {
           name: "CSE Department",
-          email: process.env.FROM_EMAIL||"dams.project25@gmail.com",
+          email:"dams.project25@gmail.com",
         },
         subject,
         text,
