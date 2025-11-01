@@ -86,5 +86,7 @@ router.get("/api/faculty", async (req, res) => {
   }
 });
 
+//jknl
+
 
 module.exports = router;
