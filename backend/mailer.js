@@ -8,10 +8,7 @@ const transporter = {
     try {
       const msg = {
         to,
-        from: {
-          name: "CSE Department",
-          email:"dams.project25@gmail.com",
-        },
+        from: "dams.project25@gmail.com", // ✅ Verified sender email only
         subject,
         text,
         html,
