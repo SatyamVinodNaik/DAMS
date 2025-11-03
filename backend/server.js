@@ -20,6 +20,7 @@ const notesRoutes = require("./routes/notes");
 const announcementsRoutes = require("./routes/announcements");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
+const staffRoutes = require("./routes/staff");
 const storage = multer.memoryStorage();
 
 const app = express();
@@ -88,6 +89,7 @@ app.use("/api/notes", notesRoutes);
 app.use("/api/announcements", announcementsRoutes);
 app.use("/api", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/staff", staffRoutes);
 // Cache prevention
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
