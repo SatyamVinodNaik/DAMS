@@ -91,7 +91,7 @@
     <div class="bg-white/20 backdrop-blur-md rounded-2xl shadow-2xl  w-450 p-8 text-white">
       <!-- Profile -->
       <div class="flex flex-col items-center text-center">
-        <img src="https://via.placeholder.com/150" alt="Profile Photo"
+        <img src="assets/images/images.jpeg" alt="Profile Photo"
           class="w-32 h-32 rounded-full border-4 border-white shadow-lg mb-4">
         <h2 class="text-2xl font-bold">Department of Computer Science & Engineering</h2>
         <p class="text-sm mt-2 text-gray-100">Visvesvaraya Technological University, Belgaum, Karnataka</p>
@@ -126,7 +126,7 @@
         <div class="hidden md:block border-l-4 border-white/50 h-auto mx-4"></div>
 
         <!-- Right Section -->
-        <div class="md:w-1/2 bg-white/10 p-6 rounded-2xl shadow-md">
+        <div class="md:w-1/2 w-100 bg-white/10 p-6 rounded-2xl shadow-md">
           <!-- Vision -->
           <div class="mb-6">
             <h1 class="text-3xl font-extrabold text-center mb-4 text-yellow-300">Vision</h1>
@@ -169,7 +169,7 @@
       <!-- Staff Button -->
       <div class="flex justify-center">
         <button id="staffBtn"
-          class="px-6 py-3 bg-white text-cyan-600 font-semibold rounded-full shadow-md hover:bg-cyan-50 hover:scale-105 transition transform duration-300">
+          class=" mt-10 px-6 py-3 bg-white text-cyan-600 font-semibold rounded-full shadow-md hover:bg-cyan-50 hover:scale-105 transition transform duration-300">
           Meet Our Staffs
         </button>
       </div>
@@ -181,31 +181,17 @@
     <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-3xl p-8 relative">
       <button id="closeModal" class="absolute top-4 right-4 text-gray-600 hover:text-red-500 text-2xl">&times;</button>
       <h2 class="text-3xl font-bold text-center mb-6 text-cyan-600">Our Staffs</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
-        <!-- Example Staff Card -->
-        <div class="bg-gray-100 p-4 rounded-xl shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/120" class="mx-auto rounded-full mb-3">
-          <h3 class="font-bold text-lg">Dr. Ananya Rao</h3>
-          <p class="text-gray-700 text-sm">Head of Department</p>
+      <div id="staffContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+        <!-- Cards will be loaded here dynamically -->
+        <div
+          class="mx-auto mb-3 w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 text-white text-4xl shadow-md">
+          <i class="fa-solid fa-user"></i>
         </div>
-        <div class="bg-gray-100 p-4 rounded-xl shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/120" class="mx-auto rounded-full mb-3">
-          <h3 class="font-bold text-lg">Mr. Raghav Sharma</h3>
-          <p class="text-gray-700 text-sm">Assistant Professor</p>
-        </div>
-        <div class="bg-gray-100 p-4 rounded-xl shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/120" class="mx-auto rounded-full mb-3">
-          <h3 class="font-bold text-lg">Mrs. Priya Patil</h3>
-          <p class="text-gray-700 text-sm">Associate Professor</p>
-        </div>
-        <div class="bg-gray-100 p-4 rounded-xl shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/120" class="mx-auto rounded-full mb-3">
-          <h3 class="font-bold text-lg">Mr. Kiran Desai</h3>
-          <p class="text-gray-700 text-sm">Assistant Professor</p>
-        </div>
+
       </div>
     </div>
   </div>
+
 
   <!-- CONTACT -->
   <section id="contact"
@@ -324,6 +310,53 @@
         sendBtn.disabled = false;
       }
     });
+
+
+    async function loadStaffData() {
+      try {
+        const res = await fetch("/api/staff");
+        const staffList = await res.json();
+
+        const container = document.getElementById("staffContainer");
+        container.innerHTML = "";
+
+        staffList.forEach(staff => {
+          const card = document.createElement("div");
+          card.className =
+            "bg-gray-100 p-4 rounded-xl shadow hover:shadow-lg transition text-center";
+
+          const firstLetter = staff.name ? staff.name.charAt(0).toUpperCase() : "?";
+
+          // ✅ If photo exists → show image
+          // ✅ If not → show profile icon
+          const avatarHTML = staff.photo
+            ? `<img src="${staff.photo}" alt="${staff.name}" 
+             onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<div class=\'mx-auto mb-3 w-24 h-24 flex items-center justify-center rounded-full bg-gray-300 text-gray-700 text-4xl shadow-md\'><i class=\'fa-solid fa-user\'></i></div>')"
+             class="mx-auto rounded-full mb-3 w-24 h-24 object-cover border-2 border-cyan-400 shadow-md">`
+            : `<div class="mx-auto mb-3 w-24 h-24 flex items-center justify-center rounded-full bg-gray-300 text-gray-700 text-4xl shadow-md">
+            <i class="fa-solid fa-user"></i>
+          </div>`;
+
+          card.innerHTML = `
+        ${avatarHTML}
+        <h3 class="font-bold text-lg text-gray-800">${staff.name}</h3>
+        <p class="text-gray-600 text-sm">${staff.position || "Staff"}</p>
+      `;
+
+          container.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Failed to load staff data:", error);
+      }
+    }
+
+
+    // Example: When modal opens, load staff
+    staffBtn.addEventListener('click', () => {
+      staffModal.classList.remove('hidden');
+      loadStaffData(); // ✅ Load staff when opening modal
+    });
+
 
     // Session check
     async function checkSession() {
