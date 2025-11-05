@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./assets/css/output.css" rel="stylesheet" />
+    <style>
+        :root {
+            --card-radius: 1rem;
+            --card-shadow: 0 8px 30px rgba(16, 24, 40, 0.06);
+            --accent: #7c3aed;
+        }
+
+        body {
+            background: #f3f4f6;
+            /* gray-100 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Fade / slide in for sections */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Collapsible card basic */
+        .collapsible {
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            background: #fff;
+            overflow: hidden;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .collapsible:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(16, 24, 40, 0.12);
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(180deg, rgba(124, 58, 237, 0.03), transparent);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible-title {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .collapsible-body {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 1.25rem;
+            transition: max-height 0.38s cubic-bezier(.2, .9, .3, 1), padding 0.28s ease;
+            opacity: 0;
+        }
+
+        .collapsible.open .collapsible-body {
+            padding: 1rem 1.25rem 1.5rem 1.25rem;
+            max-height: 1200px;
+            opacity: 1;
+        }
+
+        /* Modal animations */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.45);
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+        }
+
+        .modal-card {
+            width: 96%;
+            max-width: 420px;
+            border-radius: 0.9rem;
+            box-shadow: 0 18px 50px rgba(2, 6, 23, 0.35);
+            transform: translateY(10px) scale(0.98);
+            opacity: 0;
+            transition: transform 0.26s ease, opacity 0.26s ease;
+        }
+
+        .modal-card.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Buttons subtle */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 0.6rem;
+            padding: 0.6rem 0.9rem;
+            font-weight: 600;
+            transition: transform 0.15s ease, box-shadow 0.18s ease;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.997);
+        }
+
+        .btn-glow {
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.08);
+        }
+
+        /* small responsive tweaks */
+        @media (min-width: 1024px) {
+            .max-w-lg {
+                max-width: 720px;
+            }
+        }
+
+        /* textarea / pre scroll */
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-8 text-gray-800">
+
+    <!-- ========== HEADER ========== -->
+    <header class="max-w-4xl mx-auto mb-8">
+        <h1 class="text-4xl font-bold text-center text-indigo-700 fade-in">⚙️ Admin Panel</h1>
+    </header>
+
+    <!-- ========== SEARCH + EDIT BUTTONS ========== -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8 fade-in">
+        <div class="flex gap-3 items-center">
+            <input id="studentSearch" type="text" placeholder="Enter USN"
+                class="border p-2 flex-1 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            <button id="openStudentModalBtn"
+                class="ml-2 btn btn-glow bg-blue-600 text-white hover:bg-blue-700 rounded-lg">Edit / Add
+                Student</button>
+        </div>
+        <div class="flex gap-3 items-center">
+            <input id="facultySearch" type="text" placeholder="Enter SSN"
+                class="border p-2 flex-1 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300" />
+            <button id="openFacultyModalBtn"
+                class="ml-2 btn btn-glow bg-green-600 text-white hover:bg-green-700 rounded-lg">Edit / Add
+                Faculty</button>
+        </div>
+        <main class="max-w-4xl mx-auto space-y-6">
+
+            <!-- Delete -->
+            <article class="collapsible fade-in" id="card-delete">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-red-600">🗑️ Delete Record</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+                <div class="collapsible-body">
+                    <form id="deleteForm" class="flex gap-3 mt-3 flex-wrap">
+                        <select id="deleteType" class="border p-2 rounded-lg">
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                        </select>
+                        <input id="deleteId" placeholder="Enter USN or SSN"
+                            class="border p-2 flex-1 rounded-lg min-w-[180px] focus:outline-none" />
+                        <button type="submit"
+                            class="btn bg-red-600 text-white hover:bg-red-700 rounded-lg btn-glow">Delete</button>
+                    </form>
+                </div>
+            </article>
+
+            <!-- Assign Faculty to Subject -->
+            <article class="collapsible fade-in" id="card-assign-faculty">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-indigo-700">📘 Assign Faculty to Subject</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+
+                <div class="collapsible-body">
+                    <form id="assignForm" class="space-y-3 mt-3">
+                        <select id="assignSem" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Semester</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+
+                        <select id="assignSection" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Section</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                        </select>
+
+                        <select id="assignSubject" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Subject</option>
+                        </select>
+
+                        <select id="assignFaculty" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Faculty</option>
+                        </select>
+
+                        <label class="flex items-center gap-3">
+                            <input type="checkbox" name="is_class_advisor" value="1"
+                                class="w-5 h-5 accent-purple-600" />
+                            <span class="text-gray-700 font-medium">Mark as Class Advisor</span>
+                        </label>
+
+                        <div class="pt-2">
+                            <button type="submit"
+                                class="btn bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg w-full btn-glow">Assign
+                                Faculty</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+
+            <!-- View Assigned Faculty -->
+            <article class="collapsible fade-in" id="card-view-assigned">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-gray-700">🔍 View Assigned Faculty</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+
+                <div class="collapsible-body">
+                    <div class="mt-3">
+                        <div class="flex gap-3 mb-3 flex-wrap">
+                            <input id="viewSubject" placeholder="Subject Code"
+                                class="border p-2 flex-1 rounded-lg min-w-[140px]" />
+                            <input id="viewSection" placeholder="Section"
+                                class="border p-2 flex-1 rounded-lg min-w-[120px]" />
+                        </div>
+                        <button id="viewAssignmentBtn"
+                            class="btn bg-gray-700 text-white hover:bg-gray-900 rounded-lg w-full btn-glow">View
+                            Assignment</button>
+
+                        <pre id="assignmentResult" class="bg-gray-50 p-3 rounded-lg text-sm mt-3"></pre>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Old View Class Advisor (single-section view) -->
+            <article class="collapsible fade-in" id="card-view-advisor-old">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-purple-600">🎓 View Class Advisor</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+
+                <div class="collapsible-body">
+                    <div class="mt-3">
+                        <div class="flex gap-3 mb-3">
+                            <input id="advisorSection" placeholder="Section (e.g., A)"
+                                class="border p-2 flex-1 rounded-lg min-w-[140px]" />
+                            <button id="viewAdvisorBtn"
+                                class="btn bg-purple-600 text-white hover:bg-purple-700 rounded-lg btn-glow">View
+                                Advisor</button>
+                        </div>
+                        <pre id="advisorResult" class="bg-gray-50 p-3 rounded-lg text-sm"></pre>
+                    </div>
+                </div>
+            </article>
+
+            <!-- NEW: Assign Class Advisor (by sem & section) -->
+            <article class="collapsible fade-in" id="card-assign-ca">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-purple-700">🏫 Assign Class Advisor</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+
+                <div class="collapsible-body">
+                    <form id="assignCAForm" class="space-y-3 mt-3">
+                        <select id="caSem" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Semester</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+
+                        <select id="caSection" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Section</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                        </select>
+
+                        <select id="caFaculty" class="border p-2 w-full rounded-lg" required>
+                            <option value="">Select Faculty</option>
+                        </select>
+
+                        <div>
+                            <button type="submit"
+                                class="btn bg-purple-600 text-white hover:bg-purple-700 rounded-lg w-full btn-glow">Assign
+                                as
+                                Class Advisor</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+
+            <!-- NEW: View Class Advisor (by sem & section) -->
+            <article class="collapsible fade-in" id="card-view-ca">
+                <div class="collapsible-header" data-toggle>
+                    <div class="collapsible-title">
+                        <h2 class="text-2xl font-semibold text-purple-700">🔍 View Class Advisor (by Sem & Section)</h2>
+                    </div>
+                    <div class="text-gray-500 toggle-indicator">▼</div>
+                </div>
+
+                <div class="collapsible-body">
+                    <div class="mt-3">
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <select id="viewCASem" class="border p-2 rounded-lg">
+                                <option value="">Semester</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+
+                            <select id="viewCASection" class="border p-2 rounded-lg">
+                                <option value="">Section</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </div>
+
+                        <button id="viewCAButton"
+                            class="btn bg-purple-700 text-white hover:bg-purple-800 rounded-lg w-full btn-glow">View
+                            Class
+                            Advisor</button>
+
+                        <pre id="viewCAResult" class="bg-gray-50 p-3 rounded-lg text-sm mt-3 overflow-x-auto"></pre>
+                    </div>
+                </div>
+            </article>
+
+        </main>
+
+        <!-- ========== STUDENT MODAL ========== -->
+        <div id="studentModal" class="modal-backdrop hidden" aria-hidden="true">
+            <div id="studentModalBox" class="modal-card bg-white p-6 rounded-lg">
+                <div class="flex items-start justify-between">
+                    <h3 class="text-2xl font-semibold">Add / Update Student</h3>
+                    <button id="closeStudentModal" aria-label="Close"
+                        class="text-gray-500 hover:text-gray-800 ml-2">✖</button>
+                </div>
+
+                <form id="studentForm" class="space-y-3 mt-4">
+                    <input name="usn" placeholder="USN" class="border p-2 w-full rounded-lg" required />
+                    <input name="name" placeholder="Name" class="border p-2 w-full rounded-lg" required />
+                    <input name="email" type="email" placeholder="Email" class="border p-2 w-full rounded-lg"
+                        required />
+                    <input id="studentPassword" name="password" type="password" placeholder="Password"
+                        class="border p-2 w-full rounded-lg" required />
+                    <input name="section" placeholder="Section" class="border p-2 w-full rounded-lg" />
+                    <input name="sem" placeholder="Semester" class="border p-2 w-full rounded-lg" />
+                    <input name="phone" placeholder="Phone" class="border p-2 w-full rounded-lg" />
+                    <input name="join_year" placeholder="Join Year" class="border p-2 w-full rounded-lg" />
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="btn bg-blue-600 text-white hover:bg-blue-700 rounded-lg w-full btn-glow">Save
+                            Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========== FACULTY MODAL ========== -->
+        <div id="facultyModal" class="modal-backdrop hidden" aria-hidden="true">
+            <div id="facultyModalBox" class="modal-card bg-white p-6 rounded-lg">
+                <div class="flex items-start justify-between">
+                    <h3 class="text-2xl font-semibold">Add / Update Faculty</h3>
+                    <button id="closeFacultyModal" aria-label="Close"
+                        class="text-gray-500 hover:text-gray-800 ml-2">✖</button>
+                </div>
+
+                <form id="facultyForm" class="space-y-3 mt-4">
+                    <input name="ssn_id" placeholder="SSN ID" class="border p-2 w-full rounded-lg" required />
+                    <input name="name" placeholder="Name" class="border p-2 w-full rounded-lg" required />
+                    <input name="email" type="email" placeholder="Email" class="border p-2 w-full rounded-lg"
+                        required />
+                    <input id="facultyPassword" name="password" type="password" placeholder="Password"
+                        class="border p-2 w-full rounded-lg" required />
+                    <input name="phone" placeholder="Phone" class="border p-2 w-full rounded-lg" />
+                    <input name="position" placeholder="Position" class="border p-2 w-full rounded-lg" />
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="btn bg-green-600 text-white hover:bg-green-700 rounded-lg w-full btn-glow">Save
+                            Faculty</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========== SCRIPTS ========== -->
+        <script>
+            /*************************************************************************
+             * UI Helpers
+             *************************************************************************/
+
+            // Fade-in on scroll
+            (function () {
+                const fadeEls = document.querySelectorAll(".fade-in");
+                const obs = new IntersectionObserver((entries) => {
+                    for (const e of entries) {
+                        if (e.isIntersecting) e.target.classList.add("visible");
+                    }
+                }, { threshold: 0.12 });
+                fadeEls.forEach(el => obs.observe(el));
+            })();
+
+            // Collapsible toggle behavior (uniform)
+            (function () {
+                document.querySelectorAll(".collapsible").forEach(card => {
+                    const header = card.querySelector("[data-toggle]") || card.querySelector(".collapsible-header");
+                    const indicator = card.querySelector(".toggle-indicator");
+                    header.addEventListener("click", () => {
+                        card.classList.toggle("open");
+                        if (card.classList.contains("open")) {
+                            if (indicator) indicator.textContent = "▲";
+                            // Expand body maxHeight handled by CSS via .open
+                        } else {
+                            if (indicator) indicator.textContent = "▼";
+                        }
+                    });
+                });
+            })();
+
+            // Modal show/hide helpers
+            function showModal(modalId, boxId) {
+                const modal = document.getElementById(modalId);
+                const box = document.getElementById(boxId);
+                modal.classList.remove("hidden");
+                modal.classList.remove("opacity-0");
+                box.classList.add("show");
+                modal.style.display = "flex";
+                // small focus management
+                setTimeout(() => {
+                    const firstInput = modal.querySelector("input, select, textarea, button");
+                    if (firstInput) firstInput.focus();
+                }, 150);
+            }
+
+            function hideModal(modalId, boxId) {
+                const modal = document.getElementById(modalId);
+                const box = document.getElementById(boxId);
+                box.classList.remove("show");
+                setTimeout(() => {
+                    modal.classList.add("hidden");
+                    modal.style.display = "none";
+                }, 220);
+            }
+
+            /*************************************************************************
+             * Variables & element refs (from your original file)
+             *************************************************************************/
+            const studentModal = document.getElementById("studentModal");
+            const facultyModal = document.getElementById("facultyModal");
+            const studentPassword = document.getElementById("studentPassword");
+            const facultyPassword = document.getElementById("facultyPassword");
+            const studentSearch = document.getElementById("studentSearch");
+            const facultySearch = document.getElementById("facultySearch");
+            const studentForm = document.getElementById("studentForm");
+            const facultyForm = document.getElementById("facultyForm");
+            const deleteForm = document.getElementById("deleteForm");
+            const viewAssignmentBtn = document.getElementById("viewAssignmentBtn");
+            const viewAdvisorBtn = document.getElementById("viewAdvisorBtn");
+            const assignmentResult = document.getElementById("assignmentResult");
+            const advisorResult = document.getElementById("advisorResult");
+
+            /*************************************************************************
+             * Modal open / close wiring
+             *************************************************************************/
+            document.getElementById("openStudentModalBtn").addEventListener("click", () => {
+                // reuse original prefill flow by calling prefillAndOpenModal('student', ...)
+                prefillAndOpenModal('student', 'studentSearch', 'studentModal', 'studentModalBox', studentForm);
+            });
+            document.getElementById("closeStudentModal").addEventListener("click", () => {
+                hideModal("studentModal", "studentModalBox");
+            });
+
+            document.getElementById("openFacultyModalBtn").addEventListener("click", () => {
+                prefillAndOpenModal('faculty', 'facultySearch', 'facultyModal', 'facultyModalBox', facultyForm);
+            });
+            document.getElementById("closeFacultyModal").addEventListener("click", () => {
+                hideModal("facultyModal", "facultyModalBox");
+            });
+
+            /*************************************************************************
+             * Networking helper (POST JSON)
+             *************************************************************************/
+            async function postData(url, data) {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                // return parsed JSON (caller handles errors)
+                return res.json();
+            }
+
+            /*************************************************************************
+             * PREFILL & OPEN MODAL - adapted to new modal helpers but behavior same
+             * - type: 'student' or 'faculty'
+             * - searchId: id of input to read for prefill
+             * - modalId, boxId: ids for modal container and inner card
+             * - formElement: the actual form element (DOM)
+             *************************************************************************/
+            async function prefillAndOpenModal(type, searchId, modalId, boxId, formElement) {
+                const idValue = document.getElementById(searchId).value.trim();
+                formElement.reset(); // Clear previous form data
+                const idField = type === 'student' ? 'usn' : 'ssn_id';
+                const passwordField = type === 'student' ? studentPassword : facultyPassword;
+
+                // Pre-fill ID field from search input
+                if (formElement.elements.namedItem) {
+                    try {
+                        formElement.elements.namedItem(idField).value = idValue || '';
+                    } catch (e) { }
+                }
+
+                let formEl = (typeof formElement === 'string') ? document.getElementById(formElement) : formElement;
+                if (!formEl) {
+                    formEl = (type === 'student') ? document.getElementById('studentForm') : document.getElementById('facultyForm');
+                }
+
+                // By default, enable the password field for new entries
+                if (passwordField) {
+                    passwordField.required = true;
+                    passwordField.disabled = false;
+                    passwordField.placeholder = "Password"; // reset default placeholder
+                }
+
+                if (idValue) {
+                    // Fetch data for editing
+                    try {
+                        const res = await fetch(`/api/admin/${type}/${idValue}`);
+                        const data = await res.json();
+
+                        if (res.ok && data.isEdit) {
+                            // Prefill form fields with existing data
+                            Object.keys(data).forEach(key => {
+                                try {
+                                    const input = formEl.elements.namedItem(key);
+                                    if (input) input.value = data[key];
+                                } catch (e) { }
+                            });
+
+                            // 🔒 Disable password field on edit
+                            if (passwordField) {
+                                passwordField.required = false;
+                                passwordField.disabled = true;
+                                passwordField.value = "";
+                                passwordField.placeholder = "Password cannot be edited";
+                            }
+
+                            alert(`Loaded ${type} ${idValue} for editing. Password is locked.`);
+                        } else if (res.status === 404) {
+                            alert(`${type} ${idValue} not found. Proceeding to add new record.`);
+                        } else {
+                            alert(`Error fetching ${type} for edit: ${data.message || 'Unknown error'}.`);
+                        }
+                    } catch (err) {
+                        console.error("Fetch Error:", err);
+                        alert(`Network error fetching ${type}. Proceeding to add new record.`);
+                    }
+                } else {
+                    // Adding new record
+                    if (formEl.elements && formEl.elements.namedItem(idField)) {
+                        formEl.elements.namedItem(idField).value = '';
+                    }
+                }
+
+                // Show modal
+                showModal(modalId, boxId);
+            }
+            /*************************************************************************
+                        * STUDENT / FACULTY submit handlers (unchanged core logic)
+                        *************************************************************************/
+            document.getElementById("studentForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const data = Object.fromEntries(new FormData(e.target).entries());
+                try {
+                    const res = await postData("/api/admin/student", data);
+                    alert(res.message || res.error || "Response received");
+                    if (res.message) hideModal("studentModal", "studentModalBox");
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error while saving student");
+                }
+            });
+
+            document.getElementById("facultyForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const data = Object.fromEntries(new FormData(e.target).entries());
+                try {
+                    const res = await postData("/api/admin/faculty", data);
+                    alert(res.message || res.error || "Response received");
+                    if (res.message) hideModal("facultyModal", "facultyModalBox");
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error while saving faculty");
+                }
+            });
+
+            /*************************************************************************
+             * DELETE logic (unchanged)
+             *************************************************************************/
+            document.getElementById("deleteForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const type = document.getElementById("deleteType").value;
+                const id = document.getElementById("deleteId").value.trim();
+                if (!id) return alert("Enter an ID to delete.");
+
+                if (!confirm(`Are you sure you want to delete the ${type} with ID: ${id}? THIS CANNOT BE UNDONE.`)) return;
+
+                try {
+                    const res = await fetch(`/api/admin/${type}/${id}`, { method: "DELETE" });
+                    const data = await res.json();
+                    alert(data.message || data.error || "Operation returned");
+                    if (res.ok) e.target.reset();
+                } catch (err) {
+                    console.error(err);
+                    alert("Error during delete operation.");
+                }
+            });
+
+            /*************************************************************************
+             * Populate subjects based on semester & section
+             * - uses /api/admin/subjects-list?semester=${sem}
+             *************************************************************************/
+            async function fetchSubjectsForAssign() {
+                const sem = document.getElementById("assignSem").value.trim();
+                const section = document.getElementById("assignSection").value.trim();
+                const subjectDropdown = document.getElementById("assignSubject");
+                subjectDropdown.innerHTML = "<option value=''>Select Subject</option>";
+
+                if (!sem || !section) return;
+
+                try {
+                    const res = await fetch(`/api/admin/subjects-list?semester=${sem}`);
+
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({ error: 'Server returned non-JSON error.' }));
+                        throw new Error(errorData.error || `HTTP error! Status: ${res.status}`);
+                    }
+
+                    const subjects = await res.json();
+
+                    if (Array.isArray(subjects) && subjects.length > 0) {
+                        subjects.forEach(s => {
+                            const opt = document.createElement("option");
+                            opt.value = s.subject_code;
+                            opt.textContent = `${s.subject_code} - ${s.subject_name}`;
+                            subjectDropdown.appendChild(opt);
+                        });
+                    } else {
+                        subjectDropdown.innerHTML = `<option value='' disabled>No subjects found for Sem ${sem}</option>`;
+                    }
+                } catch (err) {
+                    console.error("Error fetching subjects:", err);
+                    alert(`Error fetching subjects. Please ensure the backend route '/api/admin/subjects-list' is active. Details: ${err.message}`);
+                }
+            }
+
+            /*************************************************************************
+             * Populate faculty dropdown (for assign faculty and for CA assign)
+             *************************************************************************/
+            async function fetchFacultyList() {
+                const facultyDropdown = document.getElementById("assignFaculty");
+                facultyDropdown.innerHTML = "<option value=''>Select Faculty</option>";
+
+                try {
+                    const res = await fetch("/api/admin/faculty-list");
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({ error: 'Server returned non-JSON error.' }));
+                        throw new Error(errorData.error || `HTTP error! Status: ${res.status}`);
+                    }
+
+                    const faculty = await res.json();
+                    if (Array.isArray(faculty)) {
+                        faculty.forEach(f => {
+                            const opt = document.createElement("option");
+                            opt.value = f.ssn_id;
+                            opt.textContent = `${f.name} (${f.ssn_id})`;
+                            facultyDropdown.appendChild(opt);
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error fetching faculty list:", err);
+                    alert(`Error fetching faculty list. Please ensure the backend route '/api/admin/faculty-list' is active. Details: ${err.message}`);
+                }
+            }
+
+            /*************************************************************************
+             * Populate CA faculty dropdown (separate element id: caFaculty)
+             *************************************************************************/
+            async function populateCAFacultyDropdown() {
+                const caFacultyDropdown = document.getElementById("caFaculty");
+                caFacultyDropdown.innerHTML = "<option value=''>Select Faculty</option>";
+                try {
+                    const res = await fetch("/api/admin/faculty-list");
+                    if (!res.ok) throw new Error("Error fetching faculty list");
+                    const faculty = await res.json();
+                    faculty.forEach(f => {
+                        const opt = document.createElement("option");
+                        opt.value = f.ssn_id;
+                        opt.textContent = `${f.name} (${f.ssn_id})`;
+                        caFacultyDropdown.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error(err);
+                    alert("Failed to load faculty for Class Advisor selection");
+                }
+            }
+
+            /*************************************************************************
+             * Initialize listeners on DOMContentLoaded (like original)
+             *************************************************************************/
+            document.addEventListener("DOMContentLoaded", () => {
+                // populate faculty lists used by forms
+                fetchFacultyList();
+                populateCAFacultyDropdown();
+
+                // attach change listeners for subjects population
+                document.getElementById("assignSem").addEventListener("change", fetchSubjectsForAssign);
+                document.getElementById("assignSection").addEventListener("change", fetchSubjectsForAssign);
+
+                // Prefill modal forms if user had typed id prior to opening (handled during open)
+                // (no additional code here; prefillAndOpenModal uses search fields)
+            });
+
+
+            document.getElementById("assignForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const sem = document.getElementById("assignSem").value.trim();
+                const section = document.getElementById("assignSection").value.trim();
+                const subject_code = document.getElementById("assignSubject").value;
+                const facultyDropdown = document.getElementById("assignFaculty");
+                const faculty_id = facultyDropdown.value;
+                const faculty_name = (facultyDropdown.options[facultyDropdown.selectedIndex] || { text: '' }).text.split('(')[0].trim();
+                const is_class_advisor = e.target.is_class_advisor && e.target.is_class_advisor.checked ? 1 : 0;
+
+                if (!sem || !section || !subject_code || !faculty_id) return alert("Fill all fields!");
+
+                try {
+                    const res = await fetch("/api/admin/assign-faculty", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ faculty_id, faculty_name, subject_code, section, sem, is_class_advisor })
+                    });
+                    const data = await res.json();
+                    alert(data.message || data.error || "Operation completed");
+                    if (res.ok) e.target.reset();
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error assigning faculty");
+                }
+            });
+
+            viewAssignmentBtn.addEventListener("click", async () => {
+                const subject_code = document.getElementById("viewSubject").value.trim();
+                const section = document.getElementById("viewSection").value.trim();
+                assignmentResult.textContent = "Fetching...";
+
+                if (!subject_code || !section) {
+                    assignmentResult.textContent = "Enter Subject Code and Section.";
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/admin/assigned-faculty?subject_code=${encodeURIComponent(subject_code)}&section=${encodeURIComponent(section)}`);
+                    const data = await res.json();
+                    if (res.ok) {
+                        assignmentResult.textContent = JSON.stringify(data, null, 2);
+                    } else {
+                        assignmentResult.textContent = `Error: ${data.error || "Could not fetch assignment"}`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    assignmentResult.textContent = "Network or Server Error.";
+                }
+            });
+
+
+            document.getElementById("assignCAForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const sem = document.getElementById("caSem").value.trim();
+                const section = document.getElementById("caSection").value.trim();
+                const faculty_id = document.getElementById("caFaculty").value;
+                const faculty_name = (document.getElementById("caFaculty").selectedOptions[0] || { text: '' }).text.split("(")[0].trim();
+
+                if (!sem || !section || !faculty_id) return alert("Please select all fields!");
+
+                try {
+                    const res = await fetch("/api/admin/assign-class-advisor", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ sem, section, faculty_id, faculty_name })
+                    });
+                    const data = await res.json();
+                    alert(data.message || data.error || "Operation completed");
+                    if (res.ok) e.target.reset();
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error assigning Class Advisor");
+                }
+            });
+
+
+            document.getElementById("viewCAButton").addEventListener("click", async () => {
+                const sem = document.getElementById("viewCASem").value.trim();
+                const section = document.getElementById("viewCASection").value.trim();
+                const result = document.getElementById("viewCAResult");
+                result.textContent = "Fetching...";
+
+                if (!sem || !section) {
+                    result.textContent = "Please select both semester and section.";
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/admin/class-advisor-view?sem=${encodeURIComponent(sem)}&section=${encodeURIComponent(section)}`);
+                    const data = await res.json();
+                    if (res.ok) {
+                        result.textContent = JSON.stringify(data, null, 2);
+                    } else {
+                        result.textContent = `Error: ${data.error || "Could not fetch class advisor"}`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    result.textContent = "Network or Server Error.";
+                }
+            });
+
+
+            viewAdvisorBtn.addEventListener("click", async () => {
+                const section = document.getElementById("advisorSection").value.trim();
+                advisorResult.textContent = "Fetching...";
+
+                if (!section) {
+                    advisorResult.textContent = "Enter a Section.";
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/admin/class-advisor/${encodeURIComponent(section)}`);
+                    const data = await res.json();
+                    if (res.ok) {
+                        advisorResult.textContent = data.message || JSON.stringify(data, null, 2);
+                    } else {
+                        advisorResult.textContent = `Error: ${data.error || "Could not fetch advisor"}`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    advisorResult.textContent = "Network or Server Error.";
+                }
+            });
+
+
+            (function () {
+                // backdrop click closes modal
+                document.querySelectorAll('.modal-backdrop').forEach(back => {
+                    back.addEventListener('click', (ev) => {
+                        if (ev.target === back) {
+                            // find which modal
+                            if (back.id === 'studentModal') hideModal('studentModal', 'studentModalBox');
+                            if (back.id === 'facultyModal') hideModal('facultyModal', 'facultyModalBox');
+                        }
+                    });
+                });
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        hideModal('studentModal', 'studentModalBox');
+                        hideModal('facultyModal', 'facultyModalBox');
+                    }
+                });
+            })();
+            (function () {
+                const openIds = ['card-assign-faculty', 'card-assign-ca'];
+                openIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.classList.add('open');
+                        const ind = el.querySelector('.toggle-indicator');
+                        if (ind) ind.textContent = '▲';
+                    }
+                });
+            })();
+        </script>
+</body>
+
+</html>

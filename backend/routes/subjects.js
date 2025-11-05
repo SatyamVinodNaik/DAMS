@@ -19,19 +19,41 @@ router.get('/:department/:semester', async (req, res) => {
 });
 // Get subjects based on semester
 
+// Get subjects based on semester + section + faculty assigned
 router.get("/api/subjects-list", async (req, res) => {
-  const { semester } = req.query;
+  const { semester, section } = req.query;
+
+  if (!semester || !section) {
+    return res.status(400).json({ error: "Semester and Section are required" });
+  }
+
   try {
     const [rows] = await db.execute(
-      `SELECT * FROM subjects WHERE semester=?`,
-      [semester]
+      `
+      SELECT DISTINCT 
+          s.subject_code,
+          s.subject_name,
+          fs.faculty_id,
+          fs.faculty_name
+      FROM subjects s
+      INNER JOIN faculty_subject fs 
+          ON s.subject_code = fs.subject_code 
+          AND s.semester = fs.sem
+      WHERE s.semester = ? 
+        AND fs.section = ?
+      ORDER BY s.subject_code;
+      `,
+      [semester, section]
     );
+
     res.json(rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
+    console.error("🔥 Error fetching subject list:", err);
+    res.status(500).json({ error: "Database error while fetching subjects" });
   }
 });
+
+
 
 // POST assign faculty to a subject
 router.post("/api/subjects/faculty", async (req, res) => {

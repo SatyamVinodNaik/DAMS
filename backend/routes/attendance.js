@@ -4,24 +4,35 @@ const router = express.Router();
 
 
 // ================= SUBJECTS FOR FACULTY DROPDOWN =================
-router.get("/semester-subjects", async (req, res) => {
+// ================== Faculty Assigned Subjects for Attendance ==================
+router.get("/faculty-subjects", async (req, res) => {
   try {
-    const { semester } = req.query;
-    if (!semester) {
-      return res.status(400).json({ error: "Semester is required" });
+    if (!req.session.user || req.session.user.role !== "faculty") {
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const [rows] = await db.execute(
-      "SELECT subject_code, subject_name FROM subjects WHERE semester = ?",
-      [semester]
+    const facultyId = req.session.user.ssn_id;
+    const { sem, section } = req.query;
+
+    if (!sem || !section) {
+      return res.status(400).json({ message: "Semester and Section required" });
+    }
+
+    const [rows] = await db.query(
+      `SELECT s.subject_code, s.subject_name
+       FROM faculty_subject fs
+       JOIN subjects s ON fs.subject_code = s.subject_code
+       WHERE fs.faculty_id = ? AND fs.sem = ? AND fs.section = ?`,
+      [facultyId, sem, section]
     );
 
     res.json(rows);
   } catch (err) {
-    console.error("🔥 Error fetching subjects:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("🔥 Error fetching faculty subjects:", err);
+    res.status(500).json({ message: "Database error" });
   }
 });
+
 
 function isLoggedIn(req, res, next) {
     if (req.session.user) return next();
@@ -84,6 +95,101 @@ router.get("/me", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.put("/update", async (req, res) => {
+  try {
+    const { usn, subjectCode, date, status, hours } = req.body;
+
+    if (!usn || !subjectCode || !date || !status || !hours) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // ✅ Correct parameter order and count
+    const [result] = await db.execute(
+      `UPDATE attendance 
+       SET status = ?, hours = ?
+       WHERE usn = ? AND subject_code = ? AND date = ?`,
+      [status, hours, usn, subjectCode, date]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
+    res.json({ message: "Attendance updated successfully!" });
+  } catch (error) {
+    console.error("🔥 Error updating attendance:", error);
+    res.status(500).json({ error: "Database error while updating attendance" });
+  }
+});
+
+
+router.get("/report", async (req, res) => {
+  try {
+    if (!req.session.user || req.session.user.role !== "faculty") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const { sem, section, subjectCode } = req.query;
+    if (!sem || !section || !subjectCode) {
+      return res
+        .status(400)
+        .json({ message: "Semester, Section, and Subject are required" });
+    }
+
+    const [rows] = await db.execute(
+      `
+      SELECT 
+        st.usn,
+        st.name,
+        COUNT(DISTINCT a.date) AS total_classes,
+        COUNT(DISTINCT CASE 
+              WHEN a.status='Present' THEN a.date 
+         END) AS attended_classes,
+        CASE 
+          WHEN COUNT(DISTINCT a.date)=0 THEN 0
+          ELSE ROUND(
+            (COUNT(DISTINCT CASE 
+                   WHEN a.status='Present' THEN a.date 
+             END) / COUNT(DISTINCT a.date)) * 100,2)
+        END AS percentage
+      FROM student st
+      LEFT JOIN attendance a 
+        ON TRIM(UPPER(st.usn)) = TRIM(UPPER(a.usn))
+       AND TRIM(UPPER(a.subject_code)) = TRIM(UPPER(?))
+      WHERE st.sem = ? AND st.section = ?
+      GROUP BY st.usn, st.name
+      ORDER BY st.usn;
+      `,
+      [subjectCode, sem, section]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("🔥 Error fetching attendance report:", err);
+    res.status(500).json({ error: "Database error while fetching report" });
+  }
+});
+
+// ✅ GET: Fetch attendance details for editing
+router.get("/details", async (req, res) => {
+  const { sem, section, subjectCode, date } = req.query;
+  try {
+    const [rows] = await db.execute(
+      `SELECT st.usn, st.name, a.status 
+       FROM student st
+       LEFT JOIN attendance a 
+       ON st.usn = a.usn AND a.subject_code=? AND a.date=?
+       WHERE st.sem=? AND st.section=?`,
+      [subjectCode, date, sem, section]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching details:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 
 
 // ================= SUBJECTS FOR DROPDOWN =================

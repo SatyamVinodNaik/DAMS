@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Marks Entry</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <title>Faculty Marks Entry</title>
+    <link href="./assets/css/output.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
             background: #8B0000;
@@ -14,346 +15,449 @@
                 radial-gradient(circle at 90% 80%, rgba(255, 0, 0, 0.4) 0%, transparent 70%);
             min-height: 100vh;
         }
+
+        .subject-card,
+        .student-card {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
     </style>
 </head>
 
 <body class="min-h-screen p-4">
     <div
-        class="container mx-auto my-10 p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl shadow-2xl max-w-5xl">
+        class="container mx-auto my-10 p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl shadow-2xl max-w-6xl">
         <header class="mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Admin Marks Portal</h1>
-            <p class="text-gray-600">Enter student marks and save them to the database.</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Faculty Marks Portal</h1>
+            <p class="text-gray-600">Enter student marks for selected semester and section.</p>
         </header>
 
         <button onclick="goHome()"
             class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg">⬅ Back</button>
+        <button id="report-btn" type="button"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow ml-200">
+            View Report
+        </button>
 
-        <form id="marks-form" class="space-y-6 mt-20">
+        <form id="marks-form" class="space-y-6 mt-10">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <select id="department" name="department"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                        required>
-                        <option value="CSE">CSE</option>
+                    <label for="section" class="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                    <select id="section"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500" required>
+                        <option value="" disabled selected>Select Section</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
                     </select>
                 </div>
-                <div>
-                    <label for="usn" class="block text-sm font-medium text-gray-700 mb-1">Student USN</label>
-                    <input type="text" id="usn" name="usn" placeholder="e.g., 4CB23CS100"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                        required />
-                </div>
+
                 <div>
                     <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                    <select id="semester" name="semester"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                        required>
+                    <select id="semester"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500" required>
                         <option value="" disabled selected>Select Semester</option>
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
-                        <option value="3">Semester 3</option>
-                        <option value="4">Semester 4</option>
-                        <option value="5">Semester 5</option>
-                        <option value="6">Semester 6</option>
-                        <option value="7">Semester 7</option>
-                        <option value="8">Semester 8</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <select id="subject"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500" required>
+                        <option value="" disabled selected>Select Subject</option>
                     </select>
                 </div>
             </div>
 
-            <div id="subjects-container" class="space-y-4 pt-4 border-t">
-                <p id="subjects-placeholder" class="text-gray-500 text-center py-4">
-                    Please select a department and semester to see the subjects.
+            <div id="students-container" class="space-y-6 mt-10 border-t pt-6">
+                <p class="text-gray-500 text-center py-4">Please select Section, Semester and Subject to load students.
                 </p>
-            </div>
-
-            <div class="flex justify-end items-center gap-4 pt-4 border-t">
-                <button type="button" id="edit-btn"
-                    class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 hidden transition text-lg">
-                    Edit Marks
-                </button>
-                <span id="form-message" class="text-sm font-medium"></span>
-                <button type="submit" id="submit-btn"
-                    class="bg-rose-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-rose-700 disabled:bg-gray-400 transition text-lg">
-                    Save All Marks
-                </button>
             </div>
         </form>
     </div>
 
+    <!-- 📊 Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl w-11/12 md:w-3/4 lg:w-1/2 relative">
+            <h2 class="text-2xl font-bold mb-4 text-center">Subject Performance Report</h2>
+
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-3">
+                    <button id="filterAll"
+                        class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded">All</button>
+                    <button id="filterPass"
+                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">Passed</button>
+                    <button id="filterFail"
+                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Failed</button>
+                </div>
+                <button id="downloadReport"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                    ⬇ Download Excel
+                </button>
+            </div>
+
+            <div id="reportTableContainer" class="overflow-x-auto max-h-[400px] overflow-y-auto border rounded-lg">
+                <table id="reportTable" class="w-full text-sm text-left border-collapse">
+                    <thead class="bg-gray-200 text-gray-700">
+                        <tr>
+                            <th class="p-2 border">USN</th>
+                            <th class="p-2 border">Name</th>
+                            <th class="p-2 border">CIE 1</th>
+                            <th class="p-2 border">CIE 2</th>
+                            <th class="p-2 border">Internal</th>
+                            <th class="p-2 border">External</th>
+                            <th class="p-2 border">Total</th>
+                            <th class="p-2 border">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700"></tbody>
+                </table>
+            </div>
+
+            <button onclick="closeReport()" class="absolute top-2 right-3 text-gray-700 text-xl font-bold">✕</button>
+        </div>
+    </div>
+
+
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const form = document.getElementById("marks-form");
-            const departmentSelect = document.getElementById("department");
-            const semesterSelect = document.getElementById("semester");
-            const subjectsContainer = document.getElementById("subjects-container");
-            const submitBtn = document.getElementById("submit-btn");
-            const editBtn = document.getElementById("edit-btn");
-            const formMessage = document.getElementById("form-message");
+        const sectionSelect = document.getElementById("section");
+        const semesterSelect = document.getElementById("semester");
+        const subjectSelect = document.getElementById("subject");
+        const studentsContainer = document.getElementById("students-container");
+        const formMessage = document.getElementById("form-message");
+        const submitBtn = document.getElementById("submit-btn");
 
-            let marksLocked = false;
+        let isEditing = false;
+        let globalIsLab = false;
 
-            const calculateResult = (internal, external) => {
-                const total = internal + external;
-                return internal >= 20 && external >= 18 && total >= 40 ? "P" : "F";
-            };
+        sectionSelect.addEventListener("change", loadSubjects);
+        semesterSelect.addEventListener("change", loadSubjects);
+        subjectSelect.addEventListener("change", loadStudents);
 
-            const updateSubjectRow = (row) => {
-                const cie1 = parseFloat(row.querySelector(".cie1")?.value) || 0;
-                const cie2 = parseFloat(row.querySelector(".cie2")?.value) || 0;
-                const lab = parseFloat(row.querySelector(".lab")?.value) || 0;
-                const assignment = parseFloat(row.querySelector(".assessment")?.value) || 0;
-                const external = parseFloat(row.querySelector(".external-marks")?.value) || 0;
-                const isLab = row.querySelector(".is-lab-check")?.checked || false;
+        // ✅ Internal Marks Calculation (matches backend logic)
+        function calculateInternal(cie1, cie2, lab, assignment, isLab) {
+            const cieScaled = isLab
+                ? Math.ceil(((cie1 + cie2) / 50) * 15)
+                : Math.ceil(((cie1 + cie2) / 50) * 25);
+            return cieScaled + lab + assignment;
+        }
 
-                let cieScaled = isLab
-                    ? Math.ceil(((cie1 + cie2) / 50) * 15)
-                    : Math.ceil(((cie1 + cie2) / 50) * 25);
+        // ✅ Result Calculation (P/F)
+        function calculateResult(internal, external) {
+            const total = internal + external;
+            return internal >= 20 && external >= 18 && total >= 40 ? "P" : "F";
+        }
 
-                const internal = cieScaled + lab + assignment;
-                const total = internal + external;
+        // ✅ Fetch faculty-assigned subjects
+        async function loadSubjects() {
+            const sem = semesterSelect.value;
+            const section = sectionSelect.value;
+            if (!sem || !section) return;
 
-                const result = calculateResult(internal, external);
-
-                row.querySelector(".internal-total").textContent = internal.toFixed(2);
-                row.querySelector(".total-marks").textContent = total.toFixed(2);
-                const resultEl = row.querySelector(".final-result");
-                resultEl.textContent = result;
-                resultEl.className = `final-result font-bold text-lg ${result === "P" ? "text-green-600" : "text-red-500"}`;
-            };
-
-            const showMessage = (message, isError = false) => {
-                formMessage.textContent = message;
-                formMessage.className = `text-sm font-medium ${isError ? "text-red-600" : "text-green-600"}`;
-                setTimeout(() => (formMessage.textContent = ""), 3000);
-            };
-
-            const setFieldsDisabled = (disabled) => {
-                document.querySelectorAll(".subject-card input").forEach(inp => inp.disabled = disabled);
-                submitBtn.disabled = disabled;
-                editBtn.classList.toggle("hidden", !disabled);
-            };
-
-            // Grade point calculation for SGPA
-            const getGradePoint = (total) => {
-                if (total >= 90) return 10;
-                if (total >= 80) return 9;
-                if (total >= 70) return 8;
-                if (total >= 60) return 7;
-                if (total >= 50) return 6;
-                if (total >= 40) return 5;
-                return 0;
-            };
-
-            // Save SGPA and CGPA
-            const saveSGPACGPA = async (usn, semester, subjects) => {
-                let totalCredits = 0, totalPoints = 0;
-                subjects.forEach(s => {
-                    const credits = Number(s.credit) || 4; // default credit per subject
-                    if (s.result === "P") {
-                        totalCredits += credits;
-                        totalPoints += credits * getGradePoint(s.total);
-                    }
+            subjectSelect.innerHTML = `<option selected disabled>Loading...</option>`;
+            try {
+                const res = await fetch(`/api/marks/faculty-subjects?sem=${sem}&section=${section}`, {
+                    credentials: "include"
                 });
-                const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+                const data = await res.json();
 
-                try {
-                    const res = await fetch("/api/marks/saveSgpaCgpa", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            usn: data.usn,
-                            semester: data.semester,
-                            sgpa: sgpaCalculated
-                        })
-                    });
-
-                    if (!res.ok) throw new Error("Failed to save SGPA/CGPA");
-                    const data = await res.json();
-                    console.log("SGPA & CGPA saved!", data);
-                    return data.cgpa; // cumulative CGPA
-                } catch (err) {
-                    console.error(err);
-                    return null;
+                subjectSelect.innerHTML = `<option disabled selected>Select Subject</option>`;
+                if (!data.length) {
+                    subjectSelect.innerHTML = `<option disabled>No subjects assigned</option>`;
+                    return;
                 }
-            };
+                data.forEach(sub => {
+                    subjectSelect.innerHTML += `<option value="${sub.subject_code}">${sub.subject_name}</option>`;
+                });
+            } catch (err) {
+                console.error("Error loading subjects:", err);
+                subjectSelect.innerHTML = `<option disabled>Error loading</option>`;
+            }
+        }
 
-            const populateSubjects = async () => {
-                const department = departmentSelect.value;
-                const semester = semesterSelect.value;
-                const usn = document.getElementById("usn").value.trim();
-                subjectsContainer.innerHTML = "";
+        // ✅ Fetch students + marks
+        async function loadStudents() {
+            const sem = semesterSelect.value;
+            const section = sectionSelect.value;
+            const subject = subjectSelect.value;
+            if (!sem || !section || !subject) return;
 
-                if (!department || !semester || !usn) {
-                    subjectsContainer.innerHTML =
-                        '<p class="text-gray-500 text-center py-4">Please fill all fields to see subjects.</p>';
+            studentsContainer.innerHTML = `<p class="text-gray-500 text-center py-4">Loading students...</p>`;
+
+            try {
+                const res = await fetch(`/api/marks/students-by-section?sem=${sem}&section=${section}`, {
+                    credentials: "include",
+                });
+                const students = await res.json();
+
+                if (!students.length) {
+                    studentsContainer.innerHTML = `<p class="text-gray-500 text-center py-4">No students found.</p>`;
                     return;
                 }
 
-                try {
-                    const res = await fetch(`/api/subjects/${department}/${semester}`);
-                    const subjects = await res.json();
+                // Add Lab toggle + Edit button header
+                studentsContainer.innerHTML = `
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-2">
+          <label class="font-medium text-gray-700 text-sm">Lab Course:</label>
+          <button id="lab-toggle" type="button"
+            class="px-4 py-1 rounded-lg text-sm font-semibold bg-gray-300 hover:bg-gray-400 transition">
+            OFF
+          </button>
+        </div>
+        <button id="edit-btn" type="button"
+          class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow">
+          Edit Marks
+        </button>
+      </div>
+    `;
 
-                    let existingMarks = {};
-                    let hasExistingMarks = false;
-                    const marksRes = await fetch(`/api/marks/${usn}?semester=${semester}`);
+                const listContainer = document.createElement("div");
+                studentsContainer.appendChild(listContainer);
+
+                // Loop through students
+                for (const st of students) {
+                    const marksRes = await fetch(`/api/marks/${st.usn}`, { credentials: "include" });
+                    let markData = {};
                     if (marksRes.ok) {
-                        const marksData = await marksRes.json();
-                        if (marksData.subjects?.length) {
-                            existingMarks = Object.fromEntries(
-                                marksData.subjects.map((m) => [m.subject_code, m])
-                            );
-                            hasExistingMarks = true;
-                        }
+                        const marksJson = await marksRes.json();
+                        const found = marksJson.subjects?.find(s => s.subject_code === subject);
+                        if (found) markData = found;
                     }
 
-                    marksLocked = hasExistingMarks;
+                    const card = document.createElement("div");
+                    card.className = "student-card p-4 rounded-lg border";
+                    card.innerHTML = `
+        <h2 class="font-bold text-gray-800 text-lg mb-2">${st.usn} - ${st.name}</h2>
+        <input type="hidden" class="student-usn" value="${st.usn}">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600">CIE 1 (25)</label>
+            <input type="number" class="cie1 w-full p-2 border rounded-md text-center" min="0" max="25" value="${markData.cie1 || ""}" disabled>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">CIE 2 (25)</label>
+            <input type="number" class="cie2 w-full p-2 border rounded-md text-center" min="0" max="25" value="${markData.cie2 || ""}" disabled>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Lab (25)</label>
+            <input type="number" class="lab w-full p-2 border rounded-md text-center" min="0" max="50" value="${markData.lab || ""}" disabled>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Assignment</label>
+            <input type="number" class="assessment w-full p-2 border rounded-md text-center" min="0" max="25" value="${markData.assignment || ""}" disabled>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">External (50)</label>
+            <input type="number" class="external-marks w-full p-2 border rounded-md text-center" min="0" max="50" value="${markData.external || ""}" disabled>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Result</label>
+            <p class="final-result font-bold text-lg ${markData.result === 'P' ? 'text-green-600' : 'text-red-500'}">${markData.result || 'F'}</p>
+          </div>
+        </div>
+        <div class="pt-2 flex gap-6 text-sm">
+          <span class="text-gray-600">Internal: <strong class="internal-total">${markData.internal || 0}</strong></span>
+          <span class="text-gray-600">Total: <strong class="total-marks">${markData.total || 0}</strong></span>
+        </div>
+      `;
 
-                    if (subjects.length === 0) {
-                        subjectsContainer.innerHTML =
-                            '<p class="text-gray-500 text-center py-4">No subjects found.</p>';
-                        return;
-                    }
+                    listContainer.appendChild(card);
+                }
 
-                    subjects.forEach((subject) => {
-                        const prev = existingMarks[subject.subject_code] || {};
-                        const card = document.createElement("div");
-                        card.className = "subject-card bg-gray-50 p-4 rounded-lg border";
-                        card.innerHTML = `
-                    <input type="hidden" class="subject-code" value="${subject.subject_code}">
-                    <input type="hidden" class="subject-name" value="${subject.subject_name}">
-                    <input type="hidden" class="credit" value="${subject.credit || 4}">
-                    <div class="flex flex-wrap justify-between items-center mb-3">
-                        <div>
-                            <p class="font-bold text-gray-800">${subject.subject_name}</p>
-                            <p class="text-sm text-gray-500">${subject.subject_code}</p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-center">
-                                <p class="text-xs font-semibold text-gray-600">INTERNAL (50)</p>
-                                <p class="internal-total font-bold text-lg text-gray-800">${prev.internal?.toFixed?.(2) || "0.00"}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs font-semibold text-gray-600">TOTAL (100)</p>
-                                <p class="total-marks font-bold text-lg text-blue-600">${prev.total?.toFixed?.(2) || "0.00"}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs font-semibold text-gray-600">RESULT</p>
-                                <p class="final-result font-bold text-lg ${prev.result === "P" ? "text-green-600" : "text-red-500"}">${prev.result || "F"}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 pt-3 border-t">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600">CIE 1 (25)</label>
-                            <input type="number" class="cie1 w-full p-2 border rounded-md text-center" min="0" max="25" value="${prev.cie1 || ""}">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600">CIE 2 (25)</label>
-                            <input type="number" class="cie2 w-full p-2 border rounded-md text-center" min="0" max="25" value="${prev.cie2 || ""}">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600">Lab (25)</label>
-                            <input type="number" class="lab w-full p-2 border rounded-md text-center" min="0" max="50" value="${prev.lab || ""}">
-                        </div>
-                        <div class="flex items-center gap-2 mt-2 md:mt-0">
-                            <input type="checkbox" class="is-lab-check" ${prev.is_lab ? "checked" : ""}>
-                            <label class="text-xs font-medium text-gray-600">Lab Course?</label>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600">Assignment</label>
-                            <input type="number" class="assessment w-full p-2 border rounded-md text-center" min="0" max="100" value="${prev.assignment || ""}">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600">External (50)</label>
-                            <input type="number" class="external-marks w-full p-2 border rounded-md text-center" min="0" max="50" value="${prev.external || ""}">
-                        </div>
-                    </div>
-                `;
-                        card.querySelectorAll("input[type='number'], .is-lab-check").forEach((input) =>
-                            input.addEventListener("input", () => updateSubjectRow(card))
-                        );
+                // ✅ Lab toggle
+                document.getElementById("lab-toggle").addEventListener("click", (e) => {
+                    e.preventDefault();
+                    globalIsLab = !globalIsLab;
+                    const btn = e.target;
+                    btn.textContent = globalIsLab ? "ON" : "OFF";
+                    btn.className = globalIsLab
+                        ? "px-4 py-1 rounded-lg text-sm font-semibold bg-green-500 text-white hover:bg-green-600"
+                        : "px-4 py-1 rounded-lg text-sm font-semibold bg-gray-300 hover:bg-gray-400";
+                    document.querySelectorAll(".student-card").forEach(updateMarksRow);
+                });
 
-                        subjectsContainer.appendChild(card);
+                // ✅ Edit / Save toggle
+                document.getElementById("edit-btn").addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    isEditing = !isEditing;
 
-                        if (prev.cie1 || prev.cie2 || prev.lab || prev.assignment || prev.external) {
-                            updateSubjectRow(card);
-                        }
+                    document.querySelectorAll(".student-card input[type='number']").forEach(inp => {
+                        inp.disabled = !isEditing;
                     });
 
-                    setFieldsDisabled(hasExistingMarks);
-                } catch (error) {
-                    console.error(error);
-                    subjectsContainer.innerHTML =
-                        '<p class="text-red-500 text-center py-4">Error loading subjects</p>';
-                }
-            };
+                    const btn = e.target;
+                    if (isEditing) {
+                        btn.textContent = "Save Marks";
+                        btn.className = "bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-6 rounded-lg shadow";
+                    } else {
+                        await saveMarks();
+                        btn.textContent = "Edit Marks";
+                        btn.className = "bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow";
+                    }
+                });
 
-            departmentSelect.addEventListener("change", populateSubjects);
-            semesterSelect.addEventListener("change", populateSubjects);
-            document.getElementById("usn").addEventListener("blur", populateSubjects);
+            } catch (err) {
+                console.error("Error loading students:", err);
+                studentsContainer.innerHTML = `<p class="text-red-500 text-center py-4">Error loading students.</p>`;
+            }
+        }
 
-            editBtn.addEventListener("click", () => {
-                marksLocked = false;
-                setFieldsDisabled(false);
-                alert("Editing enabled. You can now modify marks.");
+        // ✅ Recalculate and update marks row
+        function updateMarksRow(card) {
+            const cie1 = Number(card.querySelector(".cie1").value) || 0;
+            const cie2 = Number(card.querySelector(".cie2").value) || 0;
+            const lab = Number(card.querySelector(".lab").value) || 0;
+            const assignment = Number(card.querySelector(".assessment").value) || 0;
+            const internal = calculateInternal(cie1, cie2, lab, assignment, globalIsLab);
+            const total = internal + external;
+            const result = calculateResult(internal, external);
+
+            card.querySelector(".internal-total").textContent = internal;
+            card.querySelector(".total-marks").textContent = total;
+            const external = Number(card.querySelector(".external-marks").value) || 0;
+            const resultEl = card.querySelector(".final-result");
+            resultEl.textContent = result;
+            resultEl.className = `final-result font-bold text-lg ${result === "P" ? "text-green-600" : "text-red-500"}`;
+        }
+
+        // ✅ Save marks to backend
+        async function saveMarks() {
+            const sem = semesterSelect.value;
+            const subject = subjectSelect.value;
+
+            const students = Array.from(document.querySelectorAll(".student-card")).map(card => {
+                const cie1 = Number(card.querySelector(".cie1").value) || 0;
+                const cie2 = Number(card.querySelector(".cie2").value) || 0;
+                const lab = Number(card.querySelector(".lab").value) || 0;
+                const assignment = Number(card.querySelector(".assessment").value) || 0;
+                const external = Number(card.querySelector(".external-marks").value) || 0;
+                const internal = calculateInternal(cie1, cie2, lab, assignment, globalIsLab);
+                const total = internal + external;
+                const result = calculateResult(internal, external);
+
+                return {
+                    usn: card.querySelector(".student-usn").value,
+                    code: subject,
+                    cie1, cie2, lab, assignment, external,
+                    internal, total, result, isLab: globalIsLab
+                };
             });
 
-            form.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                submitBtn.disabled = true;
-                submitBtn.textContent = "Saving...";
-
-                const data = {
-                    department: form.department.value,
-                    usn: form.usn.value,
-                    semester: form.semester.value,
-                    subjects: Array.from(document.querySelectorAll(".subject-card")).map((row) => ({
-                        code: row.querySelector(".subject-code").value,
-                        name: row.querySelector(".subject-name").value,
-                        cie1: parseFloat(row.querySelector(".cie1").value) || 0,
-                        cie2: parseFloat(row.querySelector(".cie2").value) || 0,
-                        lab: parseFloat(row.querySelector(".lab").value) || 0,
-                        isLab: row.querySelector(".is-lab-check")?.checked || false,
-                        assignment: parseFloat(row.querySelector(".assessment").value) || 0,
-                        external: parseFloat(row.querySelector(".external-marks").value) || 0,
-                        internal: parseFloat(row.querySelector(".internal-total").textContent) || 0,
-                        total: parseFloat(row.querySelector(".total-marks").textContent) || 0,
-                        result: row.querySelector(".final-result").textContent || "F",
-                        credit: parseFloat(row.querySelector(".credit")?.value) || 4
-                    })),
-                };
-
-                try {
-                    const response = await fetch("/api/marks", {
+            try {
+                for (const st of students) {
+                    const body = { usn: st.usn, semester: sem, subjects: [st] };
+                    const res = await fetch("/api/marks", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(data),
+                        body: JSON.stringify(body),
                     });
-                    if (!response.ok) throw new Error((await response.json()).message || "Failed to save marks");
-
-                    // Save SGPA & get cumulative CGPA
-                    const cgpaCumulative = await saveSGPACGPA(data.usn, data.semester, data.subjects);
-                    if (cgpaCumulative) alert(`Marks saved successfully! Cumulative CGPA: ${cgpaCumulative}`);
-                    else alert("Marks saved, but failed to save SGPA/CGPA.");
-
-                    marksLocked = true;
-                    setFieldsDisabled(true);
-                } catch (error) {
-                    console.error("Submit Error:", error);
-                    showMessage(error.message, true);
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Save Marks";
+                    if (!res.ok) throw new Error(`Error saving marks for ${st.usn}`);
                 }
-            });
+                alert("✅ Marks saved successfully!");
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error saving marks!", true);
+            } finally {
+                document.querySelectorAll(".student-card input[type='number']").forEach(inp => inp.disabled = true);
+                isEditing = false;
+            }
+        }
+        // 📊 Open Report Popup
+        document.addEventListener("click", async (e) => {
+            if (e.target.id === "report-btn") {
+                const sem = semesterSelect.value;
+                const section = sectionSelect.value;
+                const subject = subjectSelect.value;
 
-            function goHome() {
-                window.location.href = "facultyHome.html";
+                if (!sem || !section || !subject) {
+                    alert("Please select Semester, Section, and Subject first.");
+                    return;
+                }
+
+                loadReport("ALL");
+                document.getElementById("reportModal").classList.remove("hidden");
+
+                // Filter buttons
+                document.getElementById("filterAll").onclick = () => loadReport("ALL");
+                document.getElementById("filterPass").onclick = () => loadReport("P");
+                document.getElementById("filterFail").onclick = () => loadReport("F");
+                document.getElementById("downloadReport").onclick = downloadExcel;
             }
         });
+
+        async function loadReport(filter) {
+            const sem = semesterSelect.value;
+            const section = sectionSelect.value;
+            const subject = subjectSelect.value;
+            const tbody = document.querySelector("#reportTable tbody");
+
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center p-3 text-gray-500">Loading...</td></tr>`;
+
+            const res = await fetch(`/api/marks/report?sem=${sem}&section=${section}&subject=${subject}&filter=${filter}`);
+            const data = await res.json();
+
+            if (!data.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-3 text-gray-500">No records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(st => `
+    <tr class="${st.result === 'P' ? 'bg-green-50' : 'bg-red-50'}">
+      <td class="border p-2">${st.usn}</td>
+      <td class="border p-2">${st.name}</td>
+      <td class="border p-2">${st.cie1}</td>
+      <td class="border p-2">${st.cie2}</td>
+      <td class="border p-2">${st.internal}</td>
+      <td class="border p-2">${st.external}</td>
+      <td class="border p-2">${st.total}</td>
+      <td class="border p-2 font-bold ${st.result === 'P' ? 'text-green-600' : 'text-red-600'}">${st.result}</td>
+    </tr>
+  `).join("");
+        }
+
+        function closeReport() {
+            document.getElementById("reportModal").classList.add("hidden");
+        }
+
+        // 📤 Download Excel using XLSX
+        async function downloadExcel() {
+            const sem = semesterSelect.value;
+            const section = sectionSelect.value;
+            const subject = subjectSelect.value;
+            const res = await fetch(`/api/marks/report?sem=${sem}&section=${section}&subject=${subject}`);
+            const data = await res.json();
+
+            if (!data.length) {
+                alert("No data to download!");
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+            XLSX.writeFile(workbook, `Report_${subject}_${section}_Sem${sem}.xlsx`);
+        }
+
+
+        // ✅ Feedback message
+        function showMessage(msg, isError = false) {
+            formMessage.textContent = msg;
+            formMessage.className = `text-sm font-medium ${isError ? "text-red-600" : "text-green-600"}`;
+            setTimeout(() => (formMessage.textContent = ""), 3000);
+        }
+
+        // ✅ Go back
+        function goHome() {
+            window.location.href = "facultyHome.html";
+        }
     </script>
+
 
 </body>
 

@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 3000;
 app.use(
   cors({
     origin: [
-      "http://localhost:3306"
+      "http://localhost:3000"
     ],
     credentials: true,
   })
@@ -135,18 +135,81 @@ app.get("/profile", (req, res) =>
   res.sendFile(path.join(__dirname, "../frontend", "profile.html"))
 );
 
-// ================= ADMIN LOGIN =================
-app.post("/admin-login", async (req, res) => {
-  const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USER || "admin";
-  const adminPass = process.env.ADMIN_PASS || "admin123";
-
-  if (username === adminUser && password === adminPass) {
-    req.session.user = { role: "admin" };
-    return res.redirect("/admin-panel.html");
-  }
-  res.status(401).json({ message: "Invalid admin credentials" });
+app.get("/api/debug-session", (req, res) => {
+  res.json(req.session);
 });
+
+function isAdmin(req, res, next) {
+  if (req.session.user && req.session.user.role === "admin") return next();
+  res.redirect("/admin-login");
+}
+
+app.get("/admin-login", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend", "admin-login.html"));
+});
+
+
+app.get("/admin-panel", isAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend", "adminHome.html")); // main admin panel
+});
+
+
+
+// ================= ADMIN LOGIN =================
+// ================= ADMIN LOGIN (WITH OTP) =================
+const crypto = require("crypto");
+
+// Temporary OTP store (in-memory). For production, store in Redis or DB.
+const adminOTPs = {};
+
+// Step 1: Login request (email + password)
+app.post("/api/admin-login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const [rows] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
+    if (!rows.length) return res.status(401).json({ message: "Invalid email or password" });
+
+    const admin = rows[0];
+    const match = await bcrypt.compare(password, admin.password);
+    if (!match) return res.status(401).json({ message: "Invalid email or password" });
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
+    adminOTPs[email] = { otp, expires };
+
+    // Send OTP to admin's email
+    await transporter.sendMail({
+      to: email,
+      subject: "Admin Login OTP Verification",
+      text: `Your OTP for admin login is: ${otp}. It is valid for 5 minutes.`,
+      html: `<h2>Admin Login Verification</h2>
+             <p>Your OTP is: <b>${otp}</b></p>
+             <p>It expires in 5 minutes.</p>`
+    });
+
+    res.json({ success: true, message: "OTP sent to your registered email" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Step 2: Verify OTP
+app.post("/api/admin-verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  const record = adminOTPs[email];
+  if (!record) return res.status(400).json({ message: "No OTP request found" });
+  if (Date.now() > record.expires) return res.status(400).json({ message: "OTP expired" });
+  if (record.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+  // Clear OTP and start session
+  delete adminOTPs[email];
+  req.session.user = { role: "admin", email };
+  res.json({ success: true, redirect: "/adminHome.html" });
+
+});
+
 
 // Add Student
 // Add or Update Student

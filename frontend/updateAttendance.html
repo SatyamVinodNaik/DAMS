@@ -2,176 +2,395 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Attendance</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faculty Attendance Entry</title>
+    <link href="./assets/css/output.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+        }
+
+        select,
+        input,
+        textarea {
+            color: black;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            color: black;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-height: 80vh;
+            width: 90%;
+            max-width: 850px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .report-table th {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .low-attendance {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: red;
+            font-weight: bold;
+        }
+
+        .toggle-btn {
+            background: #ddd;
+            color: black;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .toggle-btn.present {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .toggle-btn.absent {
+            background: crimson;
+            color: white;
+        }
+
+        .save-btn {
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            color: white;
+            font-weight: bold;
+            padding: 10px 16px;
+            border-radius: 8px;
+            display: block;
+            margin: 1rem auto 0;
+        }
+
+        .close-btn {
+            background: crimson;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            float: right;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
-<body>
-    <div id="faculty-page"
-        class="h-screen bg-gradient-to-br from-indigo-600 via-pink-500 to-purple-500 overflow-auto p-6">
-        <div class="mb-8 flex flex-col justify-between items-center">
+<body class="p-6">
+    <div class="container mx-auto max-w-4xl form-container p-8 rounded-2xl shadow-2xl mt-8">
+        <div class="mb-6 flex justify-between items-center">
             <button onclick="goHome()"
-                class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg mr-68 md:mr-330">⬅
-                Back</button>
-            <h1 class="text-3xl font-bold text-white animate-pulse text-center flex-1">Attendance <br>
-                Management</h1>
+                class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg">⬅ Back</button>
+            <h1 class="text-2xl md:text-3xl font-bold text-center flex-1">Attendance Management</h1>
         </div>
 
-        <div class="flex justify-center mt-10">
-            <div class="bg-white/20 backdrop-blur-xl p-10 rounded-3xl shadow-2xl max-w-lg w-full">
-                <form id="attendance-form" class="space-y-6">
+        <p id="form-message" class="text-center font-semibold mb-4"></p>
 
-                    <p id="form-message" class="text-center font-semibold mb-4"></p>
-
-                    <form id="attendance-form" class="space-y-6">
-
-                        <!-- Date -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Date:</label>
-                            <input type="date" id="attendance-date" class="border rounded-lg w-full p-3 bg-white"
-                                required>
-                        </div>
-
-                        <!-- Semester -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Semester:</label>
-                            <select id="semester" class="border rounded-lg w-full p-3 bg-white" required>
-                                <option value="">Select Semester</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                            </select>
-                        </div>
-
-                        <!-- Section -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Section:</label>
-                            <select id="section" class="border rounded-lg w-full p-3 bg-white" required>
-                                <option value="">Select Section</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                            </select>
-                        </div>
-
-                        <!-- Subject -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Subject Code:</label>
-                            <select id="subject-code" class="border rounded-lg w-full p-3 bg-white" required>
-                                <option value="">Select Subject</option>
-                            </select>
-                        </div>
-
-                        <!-- Number of Hours -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Number of Hours:</label>
-                            <input type="number" id="hours" class="border rounded-lg w-full p-3 bg-white" min="1"
-                                value="1" required>
-                        </div>
-
-                        <!-- Absentees -->
-                        <div>
-                            <label class="block font-semibold mb-2 text-white">Enter Absentees USNs
-                                (comma-separated):</label>
-                            <textarea id="absentees" class="border rounded-lg w-full p-3 bg-white"
-                                placeholder="4CB25CS001, 4CB25CS005"></textarea>
-                        </div>
-
-                        <!-- Submit -->
-                        <div class="flex justify-center">
-                            <button type="submit"
-                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg">
-                                Submit
-                            </button>
-                        </div>
-
-                    </form>
+        <form id="attendance-form" class="space-y-6">
+            <div>
+                <label class="block font-semibold mb-2 text-white">Date:</label>
+                <input type="date" id="attendance-date" class="border rounded-lg w-full p-3 bg-white" required>
             </div>
+
+            <div>
+                <label class="block font-semibold mb-2 text-white">Semester:</label>
+                <select id="semester" class="border rounded-lg w-full p-3 bg-white" required>
+                    <option value="">Select Semester</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-2 text-white">Section:</label>
+                <select id="section" class="border rounded-lg w-full p-3 bg-white" required>
+                    <option value="">Select Section</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-2 text-white">Subject:</label>
+                <select id="subject-code" class="border rounded-lg w-full p-3 bg-white" required>
+                    <option value="">Select Subject</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-2 text-white">Number of Hours:</label>
+                <input type="number" id="hours" class="border rounded-lg w-full p-3 bg-white" min="1" value="1"
+                    required>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-2 text-white">Enter Absentees USNs (comma-separated):</label>
+                <textarea id="absentees" class="border rounded-lg w-full p-3 bg-white"
+                    placeholder="4CB25CS001, 4CB25CS005"></textarea>
+            </div>
+
+            <div class="flex justify-center gap-4 flex-wrap">
+                <button type="submit"
+                    class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
+                    Submit Attendance
+                </button>
+
+                <button type="button" id="view-btn"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg">
+                    View Report
+                </button>
+
+                <button type="button" id="edit-btn"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg">
+                    Edit Attendance
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Popup 1: Attendance Report -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeReport">✖</span>
+            <h2 class="text-xl font-bold text-center mb-4">Attendance Report</h2>
+            <table class="report-table" id="report-table">
+                <thead>
+                    <tr>
+                        <th>USN</th>
+                        <th>Name</th>
+                        <th>Total Classes</th>
+                        <th>Attended</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button class="save-btn" id="downloadExcel">⬇ Download Excel</button>
+        </div>
+    </div>
+
+    <!-- Popup 2: Edit Attendance -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEdit">✖</span>
+            <h2 class="text-xl font-bold text-center mb-4">Edit Attendance for Selected Date</h2>
+            <table class="report-table" id="edit-table">
+                <thead>
+                    <tr>
+                        <th>USN</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button class="save-btn" id="saveUpdates">💾 Save Updates</button>
         </div>
     </div>
 
     <script>
-        const semSelect = document.getElementById('semester');
-        const subjSelect = document.getElementById('subject-code');
-        const messageEl = document.getElementById('form-message'); // 🔹 Reference message element
 
-        // 🔹 Fetch subjects dynamically
-        semSelect.addEventListener('change', async () => {
-            const semester = parseInt(semSelect.value);
-            if (!semester) return;
+        const semSelect = document.getElementById("semester");
+        const sectionSelect = document.getElementById("section");
+        const subjSelect = document.getElementById("subject-code");
 
-            try {
-                const res = await fetch(`/api/attendance/semester-subjects?semester=${semester}`);
-                const data = await res.json();
-                subjSelect.innerHTML = '<option value="">Select Subject</option>';
-                data.forEach(sub => {
-                    subjSelect.innerHTML += `<option value="${sub.subject_code}">${sub.subject_code} - ${sub.subject_name}</option>`;
-                });
-            } catch (err) {
-                console.error("Error fetching subjects:", err);
-            }
-        });
-
-        // 🔹 Submit attendance
-        document.getElementById('attendance-form').addEventListener('submit', async (e) => {
+        // ✅ SUBMIT ATTENDANCE
+        document.getElementById("attendance-form").addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            // Clear old message
-            messageEl.textContent = "";
-            messageEl.className = "text-center font-semibold mb-4";
+            const date = document.getElementById("attendance-date").value;
+            const semester = document.getElementById("semester").value;
+            const section = document.getElementById("section").value;
+            const subjectCode = document.getElementById("subject-code").value;
+            const hours = document.getElementById("hours").value;
+            const absenteesText = document.getElementById("absentees").value.trim();
 
-            const subjectCode = subjSelect.value;
-            const semester = document.getElementById('semester').value;
-            const section = document.getElementById('section').value;
-            const hours = parseInt(document.getElementById('hours').value);
-            const absentees = document.getElementById('absentees').value
-                .split(",")
-                .map(u => u.trim())
-                .filter(u => u !== "");
-            const date = document.getElementById('attendance-date').value;
+            if (!date || !semester || !section || !subjectCode || !hours) {
+                alert("⚠️ Please fill all required fields!");
+                return;
+            }
+
+            // Convert comma-separated USNs to array
+            const absentees = absenteesText
+                ? absenteesText.split(",").map(u => u.trim().toUpperCase())
+                : [];
 
             try {
-                const res = await fetch('/api/attendance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                const res = await fetch("/api/attendance", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ subjectCode, semester, section, absentees, date, hours })
                 });
 
-                const msg = await res.json();
+                const data = await res.json();
 
                 if (res.ok) {
-                    messageEl.textContent = msg.message || "Attendance updated successfully!";
-                    messageEl.classList.add("text-green-500");
-                    setTimeout(() => {
-                        messageEl.textContent = "";
-                    }, 3000); // hides after 3 seconds
-
-                    document.getElementById('absentees').value = '';
-                    document.getElementById('hours').value = '1';
+                    alert("✅ Attendance submitted successfully!");
+                    document.getElementById("attendance-form").reset();
                 } else {
-                    messageEl.textContent = msg.error || "Something went wrong!";
-                    messageEl.classList.add("text-red-500");
-                    setTimeout(() => {
-                        messageEl.textContent = "";
-                    }, 3000);
+                    alert("❌ Error: " + (data.error || data.message));
                 }
             } catch (err) {
                 console.error("Error submitting attendance:", err);
-                messageEl.textContent = "An unexpected error occurred!";
-                messageEl.classList.add("text-red-500");
+                alert("⚠️ Failed to submit attendance. Check console for details.");
             }
         });
 
-        function goHome() {
-            window.location.href = "facultyHome.html";
-        }
-    </script>
 
+        async function loadFacultySubjects() {
+            const sem = semSelect.value;
+            const section = sectionSelect.value;
+            if (!sem || !section) return;
+            const res = await fetch(`/api/attendance/faculty-subjects?sem=${sem}&section=${section}`, { credentials: "include" });
+            const data = await res.json();
+            subjSelect.innerHTML = `<option disabled selected>Select Subject</option>`;
+            data.forEach(sub => subjSelect.innerHTML += `<option value="${sub.subject_code}">${sub.subject_name}</option>`);
+        }
+
+        semSelect.addEventListener("change", loadFacultySubjects);
+        sectionSelect.addEventListener("change", loadFacultySubjects);
+
+        // ✅ VIEW REPORT
+        document.getElementById("view-btn").addEventListener("click", async () => {
+            const sem = semSelect.value, section = sectionSelect.value, subject = subjSelect.value;
+            if (!sem || !section || !subject) return alert("Select all fields!");
+
+            const modal = document.getElementById("reportModal");
+            modal.style.display = "flex";
+            const tbody = document.querySelector("#report-table tbody");
+            tbody.innerHTML = `<tr><td colspan="5">Loading...</td></tr>`;
+
+            const res = await fetch(`/api/attendance/report?sem=${sem}&section=${section}&subjectCode=${subject}`);
+            const data = await res.json();
+            tbody.innerHTML = "";
+            data.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.className = r.percentage < 75 ? "low-attendance" : "";
+                tr.innerHTML = `<td>${r.usn}</td><td>${r.name}</td><td>${r.total_classes || 0}</td><td>${r.attended_classes || 0}</td><td>${r.percentage || 0}%</td>`;
+                tbody.appendChild(tr);
+            });
+        });
+
+        document.getElementById("closeReport").onclick = () => document.getElementById("reportModal").style.display = "none";
+
+        document.getElementById("downloadExcel").addEventListener("click", () => {
+            const table = document.getElementById("report-table");
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Attendance Report" });
+            const ws = wb.Sheets["Attendance Report"];
+            for (let i = 2; ws[`E${i}`]; i++) ws[`E${i}`].z = "0.00%";
+            XLSX.writeFile(wb, "Attendance_Report.xlsx");
+        });
+
+
+        // ✅ EDIT ATTENDANCE
+        document.getElementById("edit-btn").addEventListener("click", async () => {
+            const sem = semSelect.value, section = sectionSelect.value, subject = subjSelect.value, date = document.getElementById("attendance-date").value;
+            if (!sem || !section || !subject || !date) return alert("Please fill all fields!");
+
+            const modal = document.getElementById("editModal");
+            modal.style.display = "flex";
+            const tbody = document.querySelector("#edit-table tbody");
+            tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
+
+            const res = await fetch(`/api/attendance/details?sem=${sem}&section=${section}&subjectCode=${subject}&date=${date}`);
+            const data = await res.json();
+            tbody.innerHTML = "";
+            data.forEach(st => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${st.usn}</td><td>${st.name}</td>
+          <td><button class="toggle-btn ${st.status === 'Present' ? 'present' : 'absent'}">${st.status || 'Absent'}</button></td>`;
+                tbody.appendChild(tr);
+            });
+
+            document.querySelectorAll(".toggle-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    btn.textContent = btn.textContent === "Present" ? "Absent" : "Present";
+                    btn.classList.toggle("present");
+                    btn.classList.toggle("absent");
+                });
+            });
+        });
+
+        document.getElementById("saveUpdates").addEventListener("click", async () => {
+            const subjectCode = subjSelect.value, date = document.getElementById("attendance-date").value;
+            const hours = document.getElementById("hours").value;
+            const updates = Array.from(document.querySelectorAll("#edit-table tbody tr")).map(r => ({
+                usn: r.children[0].textContent,
+                status: r.querySelector(".toggle-btn").textContent
+            }));
+
+            for (const u of updates) {
+                await fetch("/api/attendance/update", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usn: u.usn, subjectCode, date, hours, status: u.status })
+                });
+            }
+
+            alert("✅ Attendance updated successfully!");
+            document.getElementById("editModal").style.display = "none";
+        });
+
+        document.getElementById("closeEdit").onclick = () => document.getElementById("editModal").style.display = "none";
+
+        function goHome() { window.location.href = "facultyHome.html"; }
+    </script>
 </body>
 
 </html>

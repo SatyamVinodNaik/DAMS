@@ -179,7 +179,7 @@ router.get("/class-advisor/:section", asyncHandler(async (req, res) => {
         `SELECT f.name AS faculty_name
          FROM class_advisors ca 
          JOIN faculty f ON ca.faculty_id = f.ssn_id
-         WHERE cadd.section = ? AND ca.is_class_advisor = 1`,
+         WHERE ca.section = ? AND ca.is_class_advisor = 1`,
         [section]
     );
 

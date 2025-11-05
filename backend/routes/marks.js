@@ -90,43 +90,168 @@ Click here: https://dams-production-36aa.up.railway.app/\n\nRegards,\nCSE Depart
     conn.release();
   }
 });
+// Get students by semester & section (for marks entry)
+router.get("/students", async (req, res) => {
+  const { semester, section } = req.query;
+  if (!semester || !section)
+    return res.status(400).json({ error: "Semester and Section required" });
 
-// ================== 2️⃣ Get Marks ==================
-router.get("/:usn", async (req, res) => {
   try {
-    let usn;
-    if (req.session.user && req.session.user.role === "student") {
-      usn = req.session.user.usn;
-    } else {
-      usn = req.params.usn || req.query.usn;
-      if (!usn) return res.status(401).json({ error: "Unauthorized. Please login or provide ?usn" });
-    }
-
-    const [rows] = await db.query(
-      `SELECT m.subject_code, s.subject_name, m.semester,
-        m.cie1, m.cie2, m.lab, m.assignment, m.\`external\`, s.credit, m.is_lab,
-        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15) ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) AS internal,
-        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15) ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) AS total,
-        CASE 
-          WHEN (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15) ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) >= 20
-               AND m.\`external\` >= 18
-               AND (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15) ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) >= 40
-          THEN 'P' ELSE 'F'
-        END AS result
-       FROM marks m
-       JOIN subjects s ON m.subject_code = s.subject_code
-       WHERE m.usn = ?;`,
-      [usn]
+    const [students] = await db.execute(
+      "SELECT usn, name FROM student WHERE sem = ? AND section = ? ORDER BY usn",
+      [semester, section]
     );
-
-    if (!rows.length) return res.status(404).json({ message: "No marks found for this USN" });
-    res.json({ usn, subjects: rows });
-
+    res.json(students);
   } catch (err) {
-    console.error("🔥 DB Error:", err);
-    res.status(500).json({ message: "Database error", error: err.sqlMessage || err.message, code: err.code });
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
   }
 });
+
+// ✅ Get subjects assigned to faculty based on section + semester + session faculty
+// ================== Faculty Assigned Subjects ==================
+router.get("/faculty-subjects", async (req, res) => {
+  console.log("📡 Faculty Subjects Route HIT");
+  console.log("Session user:", req.session.user);
+  console.log("Query params:", req.query);
+
+  try {
+    if (!req.session.user || req.session.user.role !== "faculty") {
+      console.log("❌ Unauthorized access - no session");
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const facultyId = req.session.user.ssn_id;
+    const { sem, section } = req.query;
+
+    console.log("➡️ Query running with:", facultyId, sem, section);
+
+    const [rows] = await db.query(
+      `SELECT s.subject_code, s.subject_name
+       FROM faculty_subject fs
+       JOIN subjects s ON fs.subject_code = s.subject_code
+       WHERE fs.faculty_id = ? AND fs.sem = ? AND fs.section = ?`,
+      [facultyId, sem, section]
+    );
+
+    console.log("✅ Result:", rows);
+    res.json(rows);
+  } catch (err) {
+    console.error("🔥 Error in faculty-subjects route:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// ================== Students by Section ==================
+router.get("/students-by-section", async (req, res) => {
+  try {
+    const { sem, section } = req.query;
+    if (!sem || !section)
+      return res.status(400).json({ message: "Semester and Section required" });
+
+    const [rows] = await db.query(
+      `SELECT usn, name FROM student WHERE sem=? AND section=? ORDER BY usn`,
+      [sem, section]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ================== 3️⃣ Subject Report (Pass/Fail Filter) ==================
+router.get("/report", async (req, res) => {
+  const { sem, section, subject, filter } = req.query;
+
+  if (!sem || !section || !subject) {
+    return res.status(400).json({ message: "Semester, Section, and Subject required" });
+  }
+
+  try {
+    let query = `
+      SELECT st.usn, st.name, 
+             m.cie1, m.cie2, m.lab, m.assignment, m.external, 
+             m.internal, m.total, m.result
+      FROM marks m
+      JOIN student st ON m.usn = st.usn
+      WHERE m.semester = ? AND st.section = ? AND m.subject_code = ?
+    `;
+
+    const params = [sem, section, subject];
+
+    if (filter === "P") query += " AND m.result = 'P'";
+    if (filter === "F") query += " AND m.result = 'F'";
+
+    query += " ORDER BY st.usn";
+
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("🔥 Error fetching report:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+
+
+
+// ================== 2️⃣ Get Marks ==================
+// ================== 2️⃣ Get Marks by USN & Semester ==================
+router.get("/:usn", async (req, res) => {
+  try {
+    const usn = req.params.usn;
+    const semester = req.query.semester;
+
+    if (!usn) {
+      return res.status(400).json({ message: "USN is required" });
+    }
+
+    let query = `
+      SELECT 
+        m.subject_code,
+        s.subject_name,
+        m.semester,
+        m.cie1, m.cie2, m.lab, m.assignment, m.\`external\`, 
+        s.credit, m.is_lab,
+        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) AS internal,
+        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) AS total,
+        CASE 
+          WHEN (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+                     ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) >= 20
+               AND m.\`external\` >= 18
+               AND (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+                         ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) >= 40
+          THEN 'P' ELSE 'F'
+        END AS result
+      FROM marks m
+      JOIN subjects s ON m.subject_code = s.subject_code
+      WHERE m.usn = ?`;
+
+    const params = [usn];
+
+    if (semester) {
+      query += " AND m.semester = ?";
+      params.push(semester);
+    }
+
+    const [rows] = await db.query(query, params);
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "No marks found for this student and semester" });
+    }
+
+    res.json({ usn, semester, subjects: rows });
+  } catch (err) {
+    console.error("🔥 DB Error:", err);
+    res.status(500).json({ message: "Database error", error: err.sqlMessage || err.message });
+  }
+});
+
 
 router.post("/saveSgpaCgpa", async (req, res) => {
     const { usn, semester, sgpa } = req.body;
@@ -182,6 +307,8 @@ router.post("/saveSgpaCgpa", async (req, res) => {
         conn.release();
     }
 });
+
+
 
 
 

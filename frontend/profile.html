@@ -15,6 +15,8 @@
 </head>
 
 <body class="bg-pink-50 min-h-screen flex flex-col items-center justify-center p-6">
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg mr-300">⬅ Back</button>
 
     <section id="profile" class="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
         <div id="student-avatar"
@@ -165,25 +167,22 @@
                 alert("Error uploading photo");
             }
         }
-
-        // --- Full Photo Modal Logic ---
         function openPhotoModal() {
             if (!currentPhotoUrl) {
-                // Prevent opening if no photo is set (only initials are shown)
                 return;
             }
             const modal = document.getElementById('photoModal');
             const modalPhoto = document.getElementById('modalPhoto');
 
-            modalPhoto.src = currentPhotoUrl; // Set the full size image source
-            modal.classList.remove('hidden'); // Show the modal
-            document.body.style.overflow = 'hidden'; // Prevent scrolling the background
+            modalPhoto.src = currentPhotoUrl;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
         function closePhotoModal() {
             const modal = document.getElementById('photoModal');
-            modal.classList.add('hidden'); // Hide the modal
-            document.body.style.overflow = ''; // Restore background scrolling
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
         }
 
 
@@ -216,7 +215,9 @@
                 loader.classList.add('hidden');
             }
         }
-
+        function goHome() {
+            window.location.href = "studentHome.html";
+        }
         // Initialize
         document.addEventListener("DOMContentLoaded", loadProfile);
     </script>
