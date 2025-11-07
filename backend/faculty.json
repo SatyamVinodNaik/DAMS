@@ -1,0 +1,18 @@
+[
+  {
+    "ssn_id": "FAC001",
+    "name": "Mr. Rajesh Singh",
+    "email": "gounskarvs18@gmail.com",
+    "password": "1234",
+    "phone": "9876543210",
+    "position": "Assistant Professor"
+  },
+  {
+    "ssn_id": "FAC002",
+    "name": "mr.ABCD",
+    "email": "gounskarvs18@gmail.com",
+    "password": "1234",
+    "phone": "9876543211",
+    "position": "Assistant Professor"
+  }
+]
