@@ -5,6 +5,7 @@ const MySQLStore = require("express-mysql-session")(session);
 const bcrypt = require("bcrypt");
 const fs = require("fs");
 const cors = require("cors");
+const crypto = require("crypto");
 const db = require("./db");
 const multer = require("multer");
 const bodyParser = require("body-parser");
@@ -120,11 +121,14 @@ const photoUpload = multer({
   }
 });
 
+
+
+
 app.use(express.static(path.join(__dirname, "../frontend")));
 // Static pages
-app.get("/", (req, res) => {
+/*app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend", "home.html"));
-});
+});*/
 app.get("/faculty-home", isAuth, (req, res) =>
   res.sendFile(path.join(__dirname, "../frontend", "facultyHome.html"))
 );
@@ -148,50 +152,41 @@ app.get("/admin-login", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend", "admin-login.html"));
 });
 
-
 app.get("/admin-panel", isAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend", "adminHome.html")); // main admin panel
+  res.sendFile(path.join(__dirname, "../frontend", "adminHome.html"));
 });
 
+// ================= ADMIN LOGIN (WITH SESSION + OTP) =================
 
+const adminOTPs = {}; // Temporary OTP store (in-memory)
 
-// ================= ADMIN LOGIN =================
-// ================= ADMIN LOGIN (WITH OTP) =================
-const crypto = require("crypto");
-
-// Temporary OTP store (in-memory). For production, store in Redis or DB.
-const adminOTPs = {};
-
-// Step 1: Login request (email + password)
+// Step 1: Admin login (Email + Password)
 app.post("/api/admin-login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const [rows] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
-    if (!rows.length) return res.status(401).json({ message: "Invalid email or password" });
+    if (!rows.length) return res.status(401).json({ success: false, message: "Invalid email or password" });
 
     const admin = rows[0];
     const match = await bcrypt.compare(password, admin.password);
-    if (!match) return res.status(401).json({ message: "Invalid email or password" });
+    if (!match) return res.status(401).json({ success: false, message: "Invalid email or password" });
 
-    // Generate 6-digit OTP
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
+    const expires = Date.now() + 5 * 60 * 1000; // 5 min expiry
     adminOTPs[email] = { otp, expires };
 
-    // Send OTP to admin's email
     await transporter.sendMail({
       to: email,
       subject: "Admin Login OTP Verification",
-      text: `Your OTP for admin login is: ${otp}. It is valid for 5 minutes.`,
-      html: `<h2>Admin Login Verification</h2>
-             <p>Your OTP is: <b>${otp}</b></p>
-             <p>It expires in 5 minutes.</p>`
+      html: `<h3>Admin Login Verification</h3><p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
     });
 
     res.json({ success: true, message: "OTP sent to your registered email" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Login Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -199,16 +194,42 @@ app.post("/api/admin-login", async (req, res) => {
 app.post("/api/admin-verify-otp", async (req, res) => {
   const { email, otp } = req.body;
   const record = adminOTPs[email];
-  if (!record) return res.status(400).json({ message: "No OTP request found" });
-  if (Date.now() > record.expires) return res.status(400).json({ message: "OTP expired" });
-  if (record.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
 
-  // Clear OTP and start session
+  if (!record) return res.status(400).json({ success: false, message: "No OTP request found" });
+  if (Date.now() > record.expires) return res.status(400).json({ success: false, message: "OTP expired" });
+  if (record.otp !== otp) return res.status(400).json({ success: false, message: "Invalid OTP" });
+
+  // OTP valid → set session
   delete adminOTPs[email];
-  req.session.user = { role: "admin", email };
-  res.json({ success: true, redirect: "/adminHome.html" });
+  req.session.user = { role: "admin", email, verified: true };
 
+  res.json({ success: true, redirect: "/admin-panel", message: "OTP verified successfully" });
 });
+
+// Admin Session Check
+app.get("/api/current-admin", (req, res) => {
+  if (req.session.user && req.session.user.role === "admin") {
+    res.json({
+      email: req.session.user.email,
+      verified: req.session.user.verified || false,
+    });
+  } else {
+    res.status(401).json({ message: "Not logged in as admin" });
+  }
+});
+
+app.get("/", (req, res) => {
+  if (req.session.user) {
+    const role = req.session.user.role;
+    if (role === "admin") return res.redirect("/admin-panel");
+    if (role === "faculty") return res.redirect("/faculty-home");
+    if (role === "student") return res.redirect("/student-home");
+  }
+  // default home page if not logged in
+  res.sendFile(path.join(__dirname, "../frontend", "home.html"));
+});
+
+
 
 
 // Add Student
@@ -320,72 +341,6 @@ app.get("/api/admin/faculty/:ssn", async (req, res) => {
   }
 });
 
-app.post("/api/timetable/upload", isAuth, upload.single("timetable"), async (req, res) => {
-  try {
-    if (req.session.user.role !== "faculty") {
-      return res.status(403).json({ error: "Only faculty can upload timetables" });
-    }
-
-    const { semester, section } = req.body;
-    if (!semester || !section || !req.file) {
-      return res.status(400).json({ error: "Semester, Section and PDF file are required" });
-    }
-
-    // Insert into DB
-    await db.execute(
-      "INSERT INTO timetables (semester, section, file_name, file_data) VALUES (?, ?, ?, ?)",
-      [semester, section, req.file.originalname, req.file.buffer]
-    );
-
-    res.json({ message: "Timetable uploaded successfully!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Get timetable PDF for a student's semester & section
-// Get timetable PDF for a student's semester & section
-app.get("/api/timetable/me", isAuth, async (req, res) => {
-  try {
-    if (req.session.user.role !== "student") {
-      return res.status(403).send("Only students can access this");
-    }
-
-    // Get student info
-    const [studentRows] = await db.execute(
-      "SELECT sem, section FROM student WHERE usn = ?",
-      [req.session.user.usn]
-    );
-
-    if (!studentRows.length) return res.status(404).send("Student not found");
-    const { sem, section } = studentRows[0];
-
-    // Get timetable
-    const [rows] = await db.execute(
-      "SELECT file_name, file_data FROM timetables WHERE semester=? AND section=? ORDER BY uploaded_at DESC LIMIT 1",
-      [sem, section]
-    );
-
-    if (!rows.length) {
-      return res
-        .status(404)
-        .send("<h2 style='text-align:center;margin-top:50px;color:red;'>Timetable not uploaded yet</h2>");
-    }
-
-    const timetable = rows[0];
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="${timetable.file_name}"`);
-    res.send(timetable.file_data);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
-
-
-
 
 // Initial DB population
 /*(async () => {
@@ -466,6 +421,27 @@ app.post("/api/profile-photo", isAuth, photoUpload.single("photo"), async (req, 
     res.status(500).json({ error: "Error uploading photo" });
   }
 });
+
+app.get("/api/admin/view-assigned", (async (req, res) => {
+    const { sem, section, subject_code } = req.query;
+
+    if (!sem || !section || !subject_code) {
+        return res.status(400).json({ error: "Semester, section, and subject are required" });
+    }
+
+    const [rows] = await db.execute(
+        `SELECT faculty_id, faculty_name, subject_code, section, sem
+         FROM faculty_subject
+         WHERE sem = ? AND section = ? AND subject_code = ?`,
+        [sem, section, subject_code]
+    );
+
+    if (!rows.length) {
+        return res.json({ message: "❌ No faculty assigned for this subject yet." });
+    }
+
+    res.json(rows[0]);
+}));
 
 // routes/student.js (or wherever your student-facing APIs are)
 

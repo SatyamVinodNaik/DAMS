@@ -140,52 +140,133 @@ router.post("/assign-faculty", asyncHandler(async (req, res) => {
     }
 
     await db.execute(
-        `INSERT INTO faculty_subject (faculty_id, faculty_name, subject_code, section, sem, is_class_advisor)
-         VALUES (?, ?, ?, ?, ?, ?)
+        `INSERT INTO faculty_subject (faculty_id, faculty_name, subject_code, section, sem)
+         VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
            faculty_id = VALUES(faculty_id),
            faculty_name = VALUES(faculty_name),
-           sem = VALUES(sem),
-           is_class_advisor = VALUES(is_class_advisor)`,
-        [faculty_id, faculty_name, subject_code, section, sem, is_class_advisor || 0]
+           sem = VALUES(sem)`,
+        [faculty_id, faculty_name, subject_code, section, sem]
     );
 
     res.json({ message: "✅ Faculty assignment updated successfully!" });
 }));
 
-router.get("/assigned-faculty", asyncHandler(async (req, res) => {
-    const { subject_code, section } = req.query;
-    if (!subject_code || !section)
-        return res.status(400).json({ error: "subject_code and section are required" });
+// ================= ASSIGN CLASS ADVISOR =================
+router.post("/assign-ca", asyncHandler(async (req, res) => {
+    const { faculty_id, faculty_name, sem, section } = req.body;
 
-    const [rows] = await db.execute(
-        `SELECT fs.*, f.name AS faculty_name, s.subject_name
-         FROM faculty_subject fs
-         JOIN faculty f ON fs.faculty_id = f.ssn_id
-         JOIN subjects s ON fs.subject_code = s.subject_code
-         WHERE fs.subject_code = ? AND fs.section = ?`,
-        [subject_code, section]
+    if (!faculty_id || !faculty_name || !sem || !section)
+        return res.status(400).json({ error: "All fields are required" });
+
+    // Make sure only one CA per section per sem
+    await db.execute(
+        `INSERT INTO class_advisors (faculty_id, faculty_name, sem, section)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           faculty_id = VALUES(faculty_id),
+           faculty_name = VALUES(faculty_name)`,
+        [faculty_id, faculty_name, sem, section]
     );
 
-    if (!rows.length) return res.status(404).json({ error: "No assignment found" });
+    res.json({ message: "✅ Class Advisor assigned successfully!" });
+}));
+
+// ================= VIEW CLASS ADVISOR =================
+router.get("/view-ca", asyncHandler(async (req, res) => {
+    const { sem, section } = req.query;
+
+    if (!sem || !section) {
+        return res.status(400).json({ error: "Semester and Section are required" });
+    }
+
+    const [rows] = await db.execute(
+        `SELECT faculty_id, faculty_name, sem, section
+         FROM class_advisors
+         WHERE sem = ? AND section = ?`,
+        [sem, section]
+    );
+
+    if (!rows.length) {
+        return res.json({ message: "❌ No Class Advisor assigned for this section yet." });
+    }
+
     res.json(rows[0]);
 }));
 
-// ================= CLASS ADVISOR =================
-router.get("/class-advisor/:section", asyncHandler(async (req, res) => {
-    const { section } = req.params;
+// ================= VIEW STUDENTS BY SEM & SECTION =================
+// ================= VIEW STUDENTS BY SEM & SECTION =================
+router.get("/view-students", asyncHandler(async (req, res) => {
+    const { sem, section } = req.query;
+
+    if (!sem || !section) {
+        return res.status(400).json({ error: "Semester and Section are required" });
+    }
 
     const [rows] = await db.execute(
-        `SELECT f.name AS faculty_name
-         FROM class_advisors ca 
-         JOIN faculty f ON ca.faculty_id = f.ssn_id
-         WHERE ca.section = ? AND ca.is_class_advisor = 1`,
-        [section]
+        `SELECT usn, name, email, section, sem, phone, photo_data, photo_type
+         FROM student
+         WHERE sem = ? AND section = ?`,
+        [sem, section]
     );
 
-    if (!rows.length) return res.status(404).json({ message: "No class advisor assigned yet for this section." });
+    if (!rows.length) {
+        return res.json({ message: "❌ No students found for this section." });
+    }
 
-    res.json(rows[0]);
+    // ✅ Convert each student's photo_data (binary) into base64
+    const students = rows.map((s) => {
+        let photoBase64 = null;
+        if (s.photo_data && s.photo_type) {
+            const base64String = Buffer.from(s.photo_data).toString("base64");
+            photoBase64 = `data:${s.photo_type};base64,${base64String}`;
+        }
+        return {
+            usn: s.usn,
+            name: s.name,
+            email: s.email,
+            section: s.section,
+            sem: s.sem,
+            phone: s.phone,
+            photo: photoBase64
+        };
+    });
+
+    res.json(students);
 }));
+  
+// ================= VIEW FACULTY BY SEMESTER =================
+// ================= VIEW ALL FACULTY =================
+router.get("/view-faculty", asyncHandler(async (req, res) => {
+    const [rows] = await db.execute(
+        `SELECT ssn_id, name, email, position, phone, photo_data, photo_type
+         FROM faculty`
+    );
+
+    if (!rows.length) {
+        return res.json({ message: "❌ No faculty records found." });
+    }
+
+    // ✅ Convert photo_data (binary) to Base64 string
+    const facultyList = rows.map((f) => {
+        let photoBase64 = null;
+        if (f.photo_data && f.photo_type) {
+            const base64String = Buffer.from(f.photo_data).toString("base64");
+            photoBase64 = `data:${f.photo_type};base64,${base64String}`;
+        }
+
+        return {
+            ssn_id: f.ssn_id,
+            name: f.name,
+            email: f.email,
+            position: f.position,
+            phone: f.phone,
+            photo: photoBase64
+        };
+    });
+
+    res.json(facultyList);
+}));
+
 
 module.exports = router;
