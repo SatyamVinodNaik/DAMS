@@ -6,20 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>📢 All Announcements</title>
   <link href="./assets/css/output.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #111827;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+  </style>
 </head>
 
-<body class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 min-h-screen text-gray-900">
+<body class="min-h-screen text-gray-900">
+  <button onclick="goHome()"
+    class="bg-gray-800 hover:bg-black text-white text-sm font-bold w-15 lg:w-25 lg:ml-10 lg:py-2 lg:px-6 mt-5 ml-5 h-10 rounded-full shadow-lg">
+    Back</button>
 
-  <div class="max-w-7xl mx-auto py-12 px-6">
+
+  <div class="max-w-7xl mx-auto py-3 px-6">
     <!-- Heading -->
     <h1 class="text-4xl md:text-5xl font-extrabold text-center text-white drop-shadow mb-6">
-      Notifications & Announcements
+      Announcements
     </h1>
 
     <!-- Sort Dropdown -->
     <div class="flex justify-center mb-8">
       <select id="sortType"
-        class="p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/90 shadow">
+        class="p-3 rounded-lg w-45 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/90 shadow">
         <option value="All" selected>All Types</option>
         <option value="Placement">Placement</option>
         <option value="Result">Result</option>
@@ -137,7 +148,9 @@
         renderAnnouncements(filtered);
       }
     });
-
+    function goHome() {
+      window.location.href = "studentHome.html";
+    }
     // Load announcements when page loads
     document.addEventListener("DOMContentLoaded", loadAnnouncements);
   </script>

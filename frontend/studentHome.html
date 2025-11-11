@@ -92,12 +92,18 @@
 
                 <a href="viewNotes.html" id="notes-card"
                     class="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 flex flex-col items-center relative">
-                    <div
-                        class="bg-blue-100 text-blue-600 rounded-full p-5 mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fas fa-sticky-note text-3xl"></i>
+                    <div class="relative">
+                        <div
+                            class="bg-blue-100 text-blue-600 rounded-full p-5 mb-5 group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-sticky-note text-3xl"></i>
+                        </div>
+                        <!-- 🔴 Notification Badge -->
+                        <span id="notes-notification-badge"
+                            class="hidden absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-md animate-pulse"></span>
                     </div>
                     <span class="text-lg font-semibold text-gray-800 group-hover:text-blue-600">Notes</span>
                 </a>
+
 
                 <div id="announcement-popup"
                     class="fixed hidden z-50 bg-white border border-gray-300 shadow-2xl rounded-xl w-80 p-5 top-[75%] right-[0%] transform -translate-y-1/2 transition-all duration-500">
@@ -262,6 +268,35 @@
                 console.error("Error loading announcements:", err);
             }
         }
+
+        // === 🆕 Check for New Notes Notification ===
+        async function checkNewNotes() {
+            try {
+                const res = await fetch("/api/notes/student-new-count", { credentials: "include" });
+                const data = await res.json();
+                const badge = document.getElementById("notes-notification-badge");
+
+                if (data.count > 0) {
+                    badge.textContent = data.count > 9 ? "9+" : data.count; // show number (max 9+)
+                    badge.classList.remove("hidden");
+                } else {
+                    badge.classList.add("hidden");
+                }
+            } catch (err) {
+                console.error("Error checking new notes:", err);
+            }
+        }
+
+        // Run when page loads
+        document.addEventListener("DOMContentLoaded", () => {
+            loadProfileHeader();
+            loadRecentAnnouncements();
+            checkNewNotes(); // 🔥 Check for new notes
+        });
+
+        // Optional: Auto-refresh badge every 2 minutes
+        setInterval(checkNewNotes, 120000);
+
 
 
         document.addEventListener("DOMContentLoaded", () => {

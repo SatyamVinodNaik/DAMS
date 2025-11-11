@@ -6,145 +6,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Profile</title>
     <link href="./assets/css/output.css" rel="stylesheet">
+
     <style>
-        /* Optional: Add a transition for a smoother modal appearance */
         .modal-transition {
             transition: opacity 0.3s ease-in-out;
+        }
+
+        body {
+            background-color: #ffe6ef;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 161, 186, 0.35) 1px, transparent 0);
+            background-size: 20px 20px;
         }
     </style>
 </head>
 
-<body class="bg-pink-50 min-h-screen flex flex-col items-center justify-center p-6">
+<body class="min-h-screen p-6 flex flex-col items-center">
+
+    <!-- Back Btn -->
     <button onclick="goHome()"
-        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg mr-300">⬅ Back</button>
+        class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-6 rounded-full shadow-lg mb-6 transition">
+        Back
+    </button>
 
-    <section id="profile" class="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
-        <div id="student-avatar"
-            class="w-24 h-24 mx-auto rounded-full bg-gray-800 flex items-center justify-center text-white text-3xl font-bold overflow-hidden cursor-pointer"
-            onclick="openPhotoModal()">
-            ?
+    <!-- ================= Student Profile Card ================= -->
+    <section id="profile"
+        class="bg-white w-full max-w-xl p-8 rounded-2xl shadow-xl border border-gray-200 backdrop-blur-xl text-center space-y-4">
+
+        <!-- Avatar -->
+        <div class="flex flex-col items-center">
+            <div id="student-avatar"
+                class="w-28 h-28 rounded-full bg-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-pink-200 overflow-hidden cursor-pointer transition hover:scale-105">
+                ?
+            </div>
+
+            <input type="file" id="profilePhotoInput" accept="image/*" class="hidden"
+                onchange="uploadProfilePhoto(event)">
+
+            <button onclick="document.getElementById('profilePhotoInput').click()"
+                class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg shadow transition">
+                Upload Photo
+            </button>
         </div>
-        <input type="file" id="profilePhotoInput" accept="image/*" class="hidden" onchange="uploadProfilePhoto(event)">
-        <button onclick="document.getElementById('profilePhotoInput').click()"
-            class="mt-2 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">Upload Photo</button>
 
-        <h2 class="text-2xl font-bold text-gray-700" id="student-name">Loading...</h2>
-        <p id="student-usn" class="text-gray-600"></p>
-        <p id="student-section" class="text-gray-600"></p>
-        <p id="student-sem" class="text-gray-600"></p>
+        <h2 id="student-name" class="text-3xl font-bold text-gray-800 mt-4">Loading...</h2>
 
-        <p id="class-advisor" class="text-gray-800 font-semibold mt-2">Class Advisor: Loading...</p>
+        <div class="text-gray-600 space-y-1">
+            <p id="student-usn"></p>
+            <p id="student-section"></p>
+            <p id="student-sem"></p>
+            <p id="student-phone"></p>
+            <p id="student-email"></p>
+        </div>
 
-        <p id="student-phone" class="text-gray-600"></p>
-        <p id="student-email" class="text-gray-600"></p>
+        <p id="class-advisor" class="text-gray-900 font-semibold mt-4">Class Advisor: Loading...</p>
 
-        <div class="mt-5 space-y-3">
+        <!-- Buttons -->
+        <div class="mt-8 flex flex-col items-center space-y-3">
             <button id="studentChangePass"
-                class="bg-blue-500 text-white px-4 py-2 rounded w-40 hover:bg-blue-600">Change Password</button>
+                class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-600 transition w-48">
+                Change Password
+            </button>
+
             <form action="/logout" method="POST">
                 <button type="submit"
-                    class="bg-red-500 text-white px-4 py-2 rounded w-40 hover:bg-red-600">Logout</button>
+                    class="bg-red-500 text-white px-6 py-2 rounded-lg shadow hover:bg-red-600 transition w-48">
+                    Logout
+                </button>
             </form>
         </div>
     </section>
 
-    ---
+    <!-- ================= Contact Section ================= -->
+    <section id="contact"
+        class="bg-white mt-10 w-full max-w-xl p-8 rounded-2xl shadow-xl border border-gray-200 backdrop-blur-xl text-center">
 
-    <section id="contact" class="bg-pink-100 mt-10 rounded-xl shadow-md p-8 w-full max-w-lg text-center">
-        <h2 class="text-3xl font-bold leading-loose">Contact Us</h2>
+        <h2 class="text-3xl font-bold text-gray-800">Contact Us</h2>
+
         <input id="email" type="text" placeholder="Enter your email"
-            class="mt-4 p-3 w-full border border-gray-300 rounded">
+            class="mt-4 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none">
+
         <textarea id="message" placeholder="Your message"
-            class="mt-4 p-3 border border-gray-300 rounded w-full h-32"></textarea>
+            class="mt-4 w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-pink-500 outline-none"></textarea>
+
         <button type="button" onclick="sendMessage()"
-            class="mt-4 bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600">Send Message</button>
+            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow transition">
+            Send Message
+        </button>
+
         <div id="loading" class="w-12 h-12 mt-4 hidden mx-auto">
             <img src="./images/spinner.svg" alt="Loading..." class="w-full h-full">
         </div>
     </section>
 
+    <!-- ================= Photo Modal ================= -->
     <div id="photoModal"
-        class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 modal-transition"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 modal-transition"
         onclick="closePhotoModal()">
-        <div class="relative bg-white rounded-full p-2" onclick="event.stopPropagation()">
-            <img id="modalPhoto" src="" alt="Full Profile Photo" class="w-64 h-64 object-cover rounded-full">
+        <div class="relative bg-white rounded-full p-2 shadow-2xl" onclick="event.stopPropagation()">
+            <img id="modalPhoto" src="" class="w-72 h-72 object-cover rounded-full shadow-lg">
             <button
-                class="absolute top-0 right-0 -mt-2 -mr-2 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-gray-700 transition-colors"
+                class="absolute top-0 right-0 -mt-3 -mr-3 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-gray-700 transition"
                 onclick="closePhotoModal()">&times;</button>
         </div>
     </div>
 
-
+    <!-- ================= JS ================= -->
     <script>
-        let currentPhotoUrl = null; // Variable to store the current photo URL
+        let currentPhotoUrl = null;
 
-        // --- Load Profile Data ---
         async function loadProfile() {
-            const caElement = document.getElementById("class-advisor");
+            const ca = document.getElementById("class-advisor");
 
             try {
-                // 1. Fetch Student Profile Data
                 const profileRes = await fetch("/api/profile");
-                const profileData = await profileRes.json();
+                const profile = await profileRes.json();
 
-                if (profileData.error) return alert(profileData.error);
+                if (profile.error) return alert(profile.error);
 
-                // Populate student details
-                document.getElementById("student-name").textContent = profileData.name;
-                document.getElementById("student-usn").textContent = `USN: ${profileData.usn}`;
-                document.getElementById("student-section").textContent = `Section: ${profileData.section}`;
-                document.getElementById("student-sem").textContent = `Semester: ${profileData.sem}`;
-                document.getElementById("student-phone").textContent = `Phone: ${profileData.phone}`;
-                document.getElementById("student-email").textContent = `Email: ${profileData.email}`;
+                document.getElementById("student-name").textContent = profile.name;
+                document.getElementById("student-usn").textContent = `USN: ${profile.usn}`;
+                document.getElementById("student-section").textContent = `Section: ${profile.section}`;
+                document.getElementById("student-sem").textContent = `Semester: ${profile.sem}`;
+                document.getElementById("student-phone").textContent = `Phone: ${profile.phone}`;
+                document.getElementById("student-email").textContent = `Email: ${profile.email}`;
 
-                // Avatar Logic
-                const initials = profileData.name.split(" ").map(w => w[0]?.toUpperCase()).slice(0, 2).join("");
+                // Avatar logic
+                const initials = profile.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
                 const avatar = document.getElementById("student-avatar");
 
-                // Store the photo URL if it exists
-                currentPhotoUrl = profileData.photoUrl;
+                currentPhotoUrl = profile.photoUrl;
 
                 if (currentPhotoUrl) {
-                    avatar.innerHTML = `<img src="${currentPhotoUrl}" alt="Profile Photo" class="w-full h-full object-cover rounded-full">`;
-                    // Make sure the avatar is clickable only if a photo exists
-                    avatar.style.cursor = 'pointer';
+                    avatar.innerHTML = `<img src="${currentPhotoUrl}" class="w-full h-full object-cover rounded-full">`;
+                    avatar.style.cursor = "pointer";
                 } else {
-                    avatar.textContent = initials || "?";
-                    // Change cursor back to default if no photo is present
-                    avatar.style.cursor = 'default';
+                    avatar.textContent = initials;
+                    avatar.style.cursor = "default";
                 }
 
-                // 2. Fetch Class Advisor Data based on student's section 💡
-                caElement.textContent = "Class Advisor: Fetching...";
+                // Class Advisor
+                ca.textContent = "Class Advisor: Fetching...";
 
-                // Assumes backend route /api/class-advisor/:section exists
-                const caRes = await fetch(`/api/admin/class-advisor/${profileData.section}`);
+                const caRes = await fetch(`/api/admin/class-advisor/${profile.section}`);
                 const caData = await caRes.json();
 
                 if (caRes.ok && caData.faculty_name) {
-                    caElement.textContent = `Class Advisor: ${caData.faculty_name}`;
-                } else if (caData.message) {
-                    // This handles the case where the CA hasn't been assigned yet (e.g., status 404 or a custom success message)
-                    caElement.textContent = `Class Advisor: Not yet assigned.`;
+                    ca.textContent = `Class Advisor: ${caData.faculty_name}`;
                 } else {
-                    caElement.textContent = `Class Advisor: Could not fetch details.`;
+                    ca.textContent = "Class Advisor: Not yet assigned.";
                 }
 
-
-                document.getElementById("studentChangePass").addEventListener("click", () => {
+                document.getElementById("studentChangePass").onclick = () => {
                     window.location.href = "changepass.html";
-                });
+                };
 
-            } catch (err) {
-                console.error(err);
-                // Set fallback text for profile and CA if initial fetch fails
-                document.getElementById("student-name").textContent = "Error Loading Profile";
-                caElement.textContent = "Class Advisor: Network error.";
-                alert("Failed to load profile. Check server connection.");
+            } catch {
+                ca.textContent = "Class Advisor: Network error.";
+                alert("Failed to load profile.");
             }
         }
 
-        // --- Upload Profile Photo ---
         async function uploadProfilePhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -158,69 +179,65 @@
 
                 if (data.success) {
                     alert("Profile photo updated!");
-                    loadProfile(); // reload profile to show new photo
+                    loadProfile();
                 } else {
                     alert(data.error || "Upload failed");
                 }
-            } catch (err) {
-                console.error(err);
-                alert("Error uploading photo");
+            } catch {
+                alert("Error uploading photo.");
             }
         }
-        function openPhotoModal() {
-            if (!currentPhotoUrl) {
-                return;
-            }
-            const modal = document.getElementById('photoModal');
-            const modalPhoto = document.getElementById('modalPhoto');
 
-            modalPhoto.src = currentPhotoUrl;
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+        function openPhotoModal() {
+            if (!currentPhotoUrl) return;
+            document.getElementById("modalPhoto").src = currentPhotoUrl;
+            document.getElementById("photoModal").classList.remove("hidden");
+            document.body.style.overflow = "hidden";
         }
 
         function closePhotoModal() {
-            const modal = document.getElementById('photoModal');
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
+            document.getElementById("photoModal").classList.add("hidden");
+            document.body.style.overflow = "";
         }
 
-
-        // --- Contact Message ---
         async function sendMessage() {
-            const email = document.getElementById('email').value;
-            const message = document.getElementById('message').value;
-            const loader = document.getElementById('loading');
+            const email = document.getElementById("email").value;
+            const msg = document.getElementById("message").value;
+            const loader = document.getElementById("loading");
 
-            if (!email || !message) return alert("Please fill both email and message fields.");
+            if (!email || !msg) return alert("Please fill both email and message.");
 
-            loader.classList.remove('hidden');
+            loader.classList.remove("hidden");
 
             try {
                 const res = await fetch("/contact", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, message })
+                    body: JSON.stringify({ email, message: msg })
                 });
+
                 const data = await res.json();
+                alert(data.success ? "Message sent!" : data.error);
+
                 if (data.success) {
-                    alert("Message sent!");
-                    document.getElementById('email').value = '';
-                    document.getElementById('message').value = '';
-                } else alert(data.error || "Failed to send message.");
-            } catch (err) {
-                console.error(err);
+                    document.getElementById("email").value = "";
+                    document.getElementById("message").value = "";
+                }
+
+            } catch {
                 alert("Error sending message.");
-            } finally {
-                loader.classList.add('hidden');
             }
+
+            loader.classList.add("hidden");
         }
+
         function goHome() {
             window.location.href = "studentHome.html";
         }
-        // Initialize
+
         document.addEventListener("DOMContentLoaded", loadProfile);
     </script>
+
 </body>
 
 </html>

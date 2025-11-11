@@ -9,9 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            min-height: 100vh;
-            color: white;
+            background-color: #ef5125;
+            background-image: radial-gradient(circle at 1px 1px, rgba(205, 205, 205, 0.5) 1px, transparent 0);
+            background-size: 20px 20px;
         }
 
         .form-container {
@@ -128,10 +128,11 @@
 </head>
 
 <body class="p-6">
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6  m-2 rounded-full shadow-lg">Back</button>
+
     <div class="container mx-auto max-w-4xl form-container p-8 rounded-2xl shadow-2xl mt-8">
         <div class="mb-6 flex justify-between items-center">
-            <button onclick="goHome()"
-                class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg">⬅ Back</button>
             <h1 class="text-2xl md:text-3xl font-bold text-center flex-1">Attendance Management</h1>
         </div>
 
@@ -187,12 +188,12 @@
 
             <div class="flex justify-center gap-4 flex-wrap">
                 <button type="submit"
-                    class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
                     Submit Attendance
                 </button>
 
                 <button type="button" id="view-btn"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg">
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg">
                     View Report
                 </button>
 

@@ -5,25 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Notes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-   <link href="./assets/css/output.css" rel="stylesheet">
+    <link href="./assets/css/output.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #ef5125;
+            background-image: radial-gradient(circle at 1px 1px, rgba(205, 205, 205, 0.5) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+        select,
+        input {
+            color: black;
+        }
+    </style>
 </head>
 
-<body>
-    <button onclick="goHome()"
-        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg m-4">
-        Back</button>
-    <div class="container mt-5">
+<body class="min-h-screen">
 
-        <!-- Upload Form -->
-        <div class="card shadow-lg p-4 rounded-3">
-            <h3 class="text-center mb-4">Faculty Upload Notes</h3>
-            <form id="uploadForm">
+    <!-- Back Button -->
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-6 m-4 rounded-full shadow-md transition">
+        Back
+    </button>
+
+    <div class="max-w-3xl mx-auto mt-6 text-black">
+
+        <!-- Upload Form Card -->
+        <div class="bg-white/15 shadow-xl p-6 rounded-xl backdrop-blur-lg">
+            <h2 class="text-2xl font-semibold text-center mb-6">Upload Notes</h2>
+
+            <form id="uploadForm" class="space-y-5">
 
                 <!-- Semester -->
-                <div class="mb-3">
-                    <label for="semester" class="form-label">Select Semester</label>
-                    <select class="form-select" id="semester" required>
+                <div>
+                    <label class="block mb-1 font-medium">Select Semester</label>
+                    <select id="semester"
+                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:outline-none"
+                        required>
                         <option value="">-- Choose Semester --</option>
                         <option value="3">3</option>
                         <option value="4">4</option>
@@ -35,42 +54,56 @@
                 </div>
 
                 <!-- Section -->
-                <div class="mb-3">
-                    <label for="section" class="form-label">Select Section</label>
-                    <select class="form-select" id="section" required>
+                <div>
+                    <label class="block mb-1 font-medium">Select Section</label>
+                    <select id="section"
+                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:outline-none"
+                        required>
                         <option value="">-- Choose Section --</option>
-                        <option>A</option>
-                        <option>B</option>
-                        <option>C</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
                     </select>
                 </div>
 
                 <!-- Subject -->
-                <div class="mb-3">
-                    <label for="subject" class="form-label">Select Subject</label>
-                    <select class="form-select" id="subject" required>
+                <div>
+                    <label class="block mb-1 font-medium">Select Subject</label>
+                    <select id="subject"
+                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:outline-none"
+                        required>
                         <option value="">-- Choose Subject --</option>
                     </select>
                 </div>
 
                 <!-- File Upload -->
-                <div class="mb-3 w-55 lg:w-25 ">
-                    <label for="file" class="form-label">Upload Notes (PDF/DOC/PPT)</label>
-                    <input type="file" class="form-control" id="file" accept=".pdf,.doc,.docx,.ppt,.pptx" required>
+                <div>
+                    <label class="block mb-1 font-medium">Upload Notes (PDF/DOC/PPT)</label>
+                    <input type="file" id="file" name="file"
+                        class="border border-gray-300 p-2 rounded-lg bg-gray-600 focus:ring-2 focus:ring-gray-700 w-60 focus:outline-none"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Upload Notes</button>
+                <button type="submit"
+                    class="w-full bg-gray-800 hover:bg-black text-white font-semibold py-2 rounded-lg transition">
+                    Upload Notes
+                </button>
             </form>
         </div>
 
         <!-- Uploaded Notes Section -->
-        <div class="card shadow-lg p-4 rounded-3 mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0">Uploaded Notes</h4>
-                <button id="deleteAllBtn" class="btn btn-sm btn-danger" disabled>Delete All</button>
+        <div class="bg-white/95 shadow-xl p-6 rounded-xl mt-6 backdrop-blur-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-700">Uploaded Notes</h3>
+                <button id="deleteAllBtn"
+                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-sm rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+                    Delete All
+                </button>
             </div>
-            <div id="notesContainer">
-                <p class="text-muted">Select Semester, Section & Subject to view notes.</p>
+
+            <div id="notesContainer" class="text-gray-600">
+                <p>Select Semester, Section & Subject to view notes.</p>
             </div>
         </div>
     </div>
@@ -82,36 +115,49 @@
         const notesContainer = document.getElementById("notesContainer");
         const deleteAllBtn = document.getElementById("deleteAllBtn");
 
-        // 1️⃣ Update subject dropdown when semester changes
-        semesterSelect.addEventListener("change", async function () {
-            const sem = this.value;
+        // 🔹 Load subjects for the logged-in faculty
+        async function loadSubjects() {
+            const sem = semesterSelect.value;
+            const section = sectionSelect.value;
             subjectSelect.innerHTML = '<option value="">-- Choose Subject --</option>';
 
-            if (sem) {
-                try {
-                    const res = await fetch(`/api/notes/subjects?semester=${sem}`);
-                    const subs = await res.json();
+            if (!sem || !section) return;
 
-                    subs.forEach(sub => {
-                        const option = document.createElement("option");
-                        option.value = sub.subject_code;
-                        option.textContent = sub.subject_name;
-                        subjectSelect.appendChild(option);
-                    });
-                } catch (err) {
-                    console.error("🔥 Error fetching subjects:", err);
-                    alert("Failed to load subjects!");
+            try {
+                const res = await fetch(`/api/notes/subjects?semester=${sem}&section=${section}`, {
+                    credentials: "include",
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert("⚠️ " + (data.message || "Unauthorized. Please log in as faculty."));
+                    return;
                 }
+
+                const subjects = await res.json();
+
+                if (subjects.length === 0) {
+                    subjectSelect.innerHTML = '<option value="">No subjects assigned</option>';
+                    return;
+                }
+
+                subjects.forEach(s => {
+                    const option = document.createElement("option");
+                    option.value = s.subject_code;
+                    option.textContent = s.subject_name;
+                    subjectSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error loading subjects:", err);
+                alert("❌ Failed to load subjects. Make sure you are logged in and assigned to this section.");
             }
+        }
 
-            renderNotes();
-        });
-
-        // 2️⃣ Refresh notes when section/subject change
-        sectionSelect.addEventListener("change", renderNotes);
+        semesterSelect.addEventListener("change", loadSubjects);
+        sectionSelect.addEventListener("change", loadSubjects);
         subjectSelect.addEventListener("change", renderNotes);
 
-        // 3️⃣ Handle form submission (upload)
+        // 🔹 Upload file
         document.getElementById("uploadForm").addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -121,14 +167,8 @@
             const fileInput = document.getElementById("file");
             const file = fileInput.files[0];
 
-            if (!semester || !section || !subject) {
-                alert("Please select semester, section, and subject.");
-                return;
-            }
-            if (!file) {
-                alert("Please select a file.");
-                return;
-            }
+            if (!semester || !section || !subject || !file)
+                return alert("Please fill all fields.");
 
             const formData = new FormData();
             formData.append("semester", semester);
@@ -139,21 +179,23 @@
             try {
                 const res = await fetch("/api/notes/upload", {
                     method: "POST",
-                    body: formData
+                    body: formData,
+                    credentials: "include",
                 });
 
-                const result = await res.json();
-                alert(result.message || "Note uploaded!");
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Upload failed");
+
+                alert("✅ " + data.message);
                 fileInput.value = "";
                 renderNotes();
             } catch (err) {
-                console.error("🔥 Upload error:", err);
-                alert("Upload failed!");
+                console.error("Upload error:", err);
+                alert("❌ Failed to upload note. Check if you are assigned to this subject.");
             }
         });
 
-        // 4️⃣ Render notes only for current selection
-        // 4️⃣ Render notes only for current selection
+        // 🔹 Render uploaded notes
         async function renderNotes() {
             const semester = semesterSelect.value;
             const section = sectionSelect.value;
@@ -162,18 +204,17 @@
             notesContainer.innerHTML = "";
 
             if (!semester || !section || !subject) {
-                notesContainer.innerHTML = '<p class="text-muted">Select Semester, Section & Subject to view notes.</p>';
+                notesContainer.innerHTML = "<p>Select Semester, Section & Subject to view notes.</p>";
                 deleteAllBtn.disabled = true;
                 return;
             }
 
             try {
-                // ✅ Fetch notes from backend
                 const res = await fetch(`/api/notes?semester=${semester}&section=${section}&subject=${subject}`);
                 const notes = await res.json();
 
                 if (notes.length === 0) {
-                    notesContainer.innerHTML = '<p class="text-muted">No notes uploaded yet for this subject.</p>';
+                    notesContainer.innerHTML = "<p>No notes uploaded yet for this subject.</p>";
                     deleteAllBtn.disabled = true;
                     return;
                 }
@@ -181,20 +222,20 @@
                 deleteAllBtn.disabled = false;
 
                 const list = document.createElement("ul");
-                list.className = "list-group";
+                list.className = "space-y-3";
 
                 notes.forEach(note => {
                     const li = document.createElement("li");
-                    li.className = "list-group-item d-flex justify-content-between align-items-center";
-                    li.innerHTML = `
-                <a href="/api/notes/${note.id}/preview" target="_blank">${note.file_name}</a>
-                <button class="btn btn-sm btn-danger">Delete</button>
-            `;
+                    li.className = "flex justify-between items-center bg-gray-100 p-3 rounded-lg border border-gray-300";
 
-                    // ✅ Delete single note
+                    li.innerHTML = `
+                        <a href="/api/notes/${note.id}/preview" class="text-gray-800 font-medium hover:underline" target="_blank">${note.file_name}</a>
+                        <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-sm rounded-lg">Delete</button>
+                    `;
+
                     li.querySelector("button").addEventListener("click", async () => {
-                        if (confirm(`Delete "${note.file_name}"?`)) {
-                            await fetch(`/api/notes/${note.id}`, { method: "DELETE" });
+                        if (confirm("Delete this file?")) {
+                            await fetch(`/api/notes/${note.id}`, { method: "DELETE", credentials: "include" });
                             renderNotes();
                         }
                     });
@@ -203,39 +244,32 @@
                 });
 
                 notesContainer.appendChild(list);
-            } catch (err) {
-                console.error("🔥 Error fetching notes:", err);
-                notesContainer.innerHTML = '<p class="text-danger">Failed to load notes.</p>';
+            } catch {
+                notesContainer.innerHTML = "<p class='text-red-600'>Failed to load notes.</p>";
             }
         }
 
-
-        // 5️⃣ Delete all notes for current selection
+        // 🔹 Delete all notes
         deleteAllBtn.addEventListener("click", async () => {
             const semester = semesterSelect.value;
             const section = sectionSelect.value;
             const subject = subjectSelect.value;
 
-            if (confirm("Delete ALL notes for this subject?")) {
-                try {
-                    await fetch(`/api/notes`, {
-                        method: "DELETE",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ semester, section, subject })
-                    });
-                    renderNotes();
-                } catch (err) {
-                    console.error("🔥 Error deleting all notes:", err);
-                    alert("Failed to delete all notes.");
-                }
+            if (confirm("Delete ALL your notes for this subject?")) {
+                await fetch(`/api/notes`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ semester, section, subject }),
+                    credentials: "include",
+                });
+                renderNotes();
             }
         });
+
         function goHome() {
             window.location.href = "facultyHome.html";
         }
     </script>
-
-
 </body>
 
 </html>

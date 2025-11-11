@@ -9,11 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
-            background: #8B0000;
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(255, 0, 0, 0.4) 0%, transparent 70%),
-                radial-gradient(circle at 90% 80%, rgba(255, 0, 0, 0.4) 0%, transparent 70%);
-            min-height: 100vh;
+            background-color: #ef5125;
+            background-image: radial-gradient(circle at 1px 1px, rgba(205, 205, 205, 0.5) 1px, transparent 0);
+            background-size: 20px 20px;
         }
 
         .subject-card,
@@ -24,17 +22,18 @@
 </head>
 
 <body class="min-h-screen p-4">
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6  m-2 rounded-full shadow-lg">Back</button>
     <div
         class="container mx-auto my-10 p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl shadow-2xl max-w-6xl">
         <header class="mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Faculty Marks Portal</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Marks Portal</h1>
             <p class="text-gray-600">Enter student marks for selected semester and section.</p>
         </header>
 
-        <button onclick="goHome()"
-            class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-full shadow-lg">⬅ Back</button>
+
         <button id="report-btn" type="button"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow ml-200">
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow ml-220">
             View Report
         </button>
 
