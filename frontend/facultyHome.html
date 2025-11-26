@@ -35,7 +35,9 @@
         <section class="w-full max-w-full">
             <h2 class="text-2xl font-semibold mb-8 text-gray-700">Quick Actions</h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-20">
+            <div id="actionGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-20">
+
+                <!-- Add Notes -->
                 <a href="uploadNotes.html"
                     class="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 cursor-pointer hover:-translate-y-2 flex flex-col items-center justify-center">
                     <div
@@ -45,6 +47,7 @@
                     <span class="text-lg font-medium text-gray-800">Add Notes</span>
                 </a>
 
+                <!-- Update Attendance -->
                 <a href="updateAttendance.html"
                     class="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 cursor-pointer hover:-translate-y-2 flex flex-col items-center justify-center">
                     <div
@@ -54,6 +57,7 @@
                     <span class="text-lg font-medium text-gray-800">Update Attendance</span>
                 </a>
 
+                <!-- Update Marks -->
                 <a href="updateMarks.html"
                     class="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 cursor-pointer hover:-translate-y-2 flex flex-col items-center justify-center">
                     <div
@@ -63,6 +67,7 @@
                     <span class="text-lg font-medium text-gray-800">Update Marks</span>
                 </a>
 
+                <!-- Publish Announcement -->
                 <a href="publishAnnounce.html"
                     class="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 cursor-pointer hover:-translate-y-2 flex flex-col items-center justify-center">
                     <div
@@ -71,6 +76,17 @@
                     </div>
                     <span class="text-lg font-medium text-gray-800">Publish Announcement</span>
                 </a>
+
+                <!-- Upload Timetable (Only CA) -->
+                <a id="uploadTimetableCard" href="facultyTimetable.html"
+                    class="hidden group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 cursor-pointer hover:-translate-y-2 flex flex-col items-center justify-center">
+                    <div
+                        class="bg-purple-100 text-purple-600 rounded-full p-4 mb-5 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-calendar text-3xl"></i>
+                    </div>
+                    <span class="text-lg font-medium text-gray-800">Upload Timetable</span>
+                </a>
+
             </div>
         </section>
     </main>
@@ -99,7 +115,7 @@
     <script>
         const profileAvatar = document.getElementById("openProfile");
 
-        // --- Load Faculty Avatar for Header ---
+        // Load Profile Avatar
         async function loadProfileHeader() {
             try {
                 const res = await fetch("/api/profile");
@@ -110,20 +126,16 @@
                     return;
                 }
 
-                // Avatar logic
                 const initials = (data.name || "?")
                     .split(" ")
                     .map(w => w[0]?.toUpperCase())
-                    .slice(0, 2)
                     .join("");
 
                 if (data.photoUrl) {
-                    profileAvatar.innerHTML = `<img src="${data.photoUrl}" alt="Profile Photo" class="w-full h-full object-cover rounded-full">`;
-                    profileAvatar.classList.remove('bg-blue-600');
-                    profileAvatar.classList.add('bg-gray-800');
+                    profileAvatar.innerHTML =
+                        `<img src="${data.photoUrl}" class="w-full h-full object-cover rounded-full">`;
                 } else {
                     profileAvatar.textContent = initials;
-                    profileAvatar.classList.add('bg-blue-600');
                 }
 
             } catch (err) {
@@ -132,19 +144,43 @@
             }
         }
 
-        // --- Redirect to Profile Page ---
         profileAvatar.addEventListener("click", () => {
             window.location.href = "facultyProfile.html";
         });
 
-        // Initialize on page load
-        document.addEventListener("DOMContentLoaded", loadProfileHeader);
+        document.addEventListener("DOMContentLoaded", () => {
+            loadProfileHeader();
+            checkClassAdvisor();
+        });
 
-        // Reload if navigating back
+        // ========= CHECK IF FACULTY IS CA =========
+        async function checkClassAdvisor() {
+            try {
+                const profile = await fetch("/api/profile").then(r => r.json());
+                if (!profile.ssn_id) return;
+
+                // Fetch ALL class advisors
+                const caList = await fetch("/api/admin/view-all-ca").then(r => r.json());
+
+                // Check if logged-in faculty is in CA list
+                const isCA = caList.some(ca => ca.faculty_id === profile.ssn_id);
+
+                if (isCA) {
+                    document.getElementById("uploadTimetableCard").classList.remove("hidden");
+                }
+
+            } catch (err) {
+                console.log("CA Check failed", err);
+            }
+        }
+
+
+        // Reload when navigating back
         if (performance.navigation.type === 2) {
             location.reload(true);
         }
     </script>
+
 </body>
 
 </html>

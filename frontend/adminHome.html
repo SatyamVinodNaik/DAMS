@@ -282,7 +282,7 @@
             <div class="title">
                 <div
                     style="width:46px;height:46px;border-radius:10px;background:rgba(255,255,255,0.12);display:grid;place-items:center;font-weight:900">
-                    ⚙️</div>
+                    ⚙</div>
                 <div>
                     <h1>Admin Dashboard</h1>
                     <p class="small">Manage students, faculty, assignments and class advisors</p>
@@ -602,335 +602,335 @@
             </div>
         </div>
     </div>
+</body>
+<script>
+    /* Minimal & functional JS - keeps all original endpoints & behaviour */
+    document.addEventListener('DOMContentLoaded', async () => {
+        // error logging
+        window.addEventListener('error', e => console.error('Frontend error:', e.message));
+        window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
 
-    <script>
-        /* Minimal & functional JS - keeps all original endpoints & behaviour */
-        document.addEventListener('DOMContentLoaded', async () => {
-            // error logging
-            window.addEventListener('error', e => console.error('Frontend error:', e.message));
-            window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
-
-            // session check (unchanged)
-            try {
-                const res = await fetch('/api/session');
-                const d = await res.json();
-                if (!d.loggedIn || d.user.role !== 'admin') {
-                    window.location.href = '/admin-login';
-                    return;
-                }
-            } catch (err) {
-                console.error('Session check failed', err);
+        // session check (unchanged)
+        try {
+            const res = await fetch('/api/session');
+            const d = await res.json();
+            if (!d.loggedIn || d.user.role !== 'admin') {
                 window.location.href = '/admin-login';
                 return;
             }
+        } catch (err) {
+            console.error('Session check failed', err);
+            window.location.href = '/admin-login';
+            return;
+        }
 
-            // helper
-            async function postData(url, data) {
-                try {
-                    const r = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    return await r.json();
-                } catch (err) {
-                    console.error('POST error', err);
-                    return { error: 'Network error' };
-                }
-            }
-
-            // Collapsibles - all open by default (no collapse on load); allow toggling
-            document.querySelectorAll('.collapsible').forEach(card => {
-                const header = card.querySelector('.collapsible-header');
-                header.addEventListener('click', () => {
-                    // toggle body visibility
-                    const body = card.querySelector('.collapsible-body');
-                    if (!body) return;
-                    if (card.classList.contains('open')) {
-                        body.style.display = 'none';
-                        card.classList.remove('open');
-                    } else {
-                        body.style.display = 'block';
-                        card.classList.add('open');
-                    }
+        // helper
+        async function postData(url, data) {
+            try {
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-                // set initial open display
+                return await r.json();
+            } catch (err) {
+                console.error('POST error', err);
+                return { error: 'Network error' };
+            }
+        }
+
+        // Collapsibles - all open by default (no collapse on load); allow toggling
+        document.querySelectorAll('.collapsible').forEach(card => {
+            const header = card.querySelector('.collapsible-header');
+            header.addEventListener('click', () => {
+                // toggle body visibility
                 const body = card.querySelector('.collapsible-body');
-                if (body) body.style.display = 'block';
-                card.classList.add('open');
-            });
-
-            // Modal helpers
-            function showModal(modalId, boxId) {
-                const modal = document.getElementById(modalId);
-                const box = document.getElementById(boxId);
-                if (!modal || !box) return;
-                modal.style.display = 'flex';
-                setTimeout(() => box.classList.add('show'), 8);
-            }
-            function hideModal(modalId, boxId) {
-                const modal = document.getElementById(modalId);
-                const box = document.getElementById(boxId);
-                if (!modal || !box) return;
-                box.classList.remove('show');
-                setTimeout(() => modal.style.display = 'none', 220);
-            }
-
-            // Prefill and open modal for student/faculty (preserves endpoint)
-            async function prefillAndOpenModal(type, searchInputId, modalId, boxId, formEl) {
-                const idValue = document.getElementById(searchInputId).value.trim();
-                formEl.reset();
-                const passwordField = type === 'student' ? document.getElementById('studentPassword') : document.getElementById('facultyPassword');
-                passwordField.required = true;
-                passwordField.disabled = false;
-                passwordField.placeholder = 'Password (required new/change)';
-                if (idValue) {
-                    try {
-                        const r = await fetch(`/api/admin/${type}/${idValue}`);
-                        const data = await r.json();
-                        if (r.ok && data.isEdit) {
-                            Object.keys(data).forEach(k => {
-                                const input = formEl.elements.namedItem(k);
-                                if (input) input.value = data[k];
-                            });
-                            passwordField.disabled = true;
-                            passwordField.placeholder = 'Password cannot be edited';
-                        } else {
-                            // not found — keep cleared for add
-                        }
-                    } catch (err) {
-                        console.error('Error loading data:', err);
-                        alert('Error loading data.');
-                    }
+                if (!body) return;
+                if (card.classList.contains('open')) {
+                    body.style.display = 'none';
+                    card.classList.remove('open');
+                } else {
+                    body.style.display = 'block';
+                    card.classList.add('open');
                 }
-                showModal(modalId, boxId);
-            }
-
-            // Hook modal open/close buttons
-            document.getElementById('openStudentModalBtn').addEventListener('click', () =>
-                prefillAndOpenModal('student', 'studentSearch', 'studentModal', 'studentModalBox', document.getElementById('studentForm'))
-            );
-            document.getElementById('openStudentModalBtn2').addEventListener('click', () =>
-                prefillAndOpenModal('student', 'studentSearch', 'studentModal', 'studentModalBox', document.getElementById('studentForm'))
-            );
-            document.getElementById('closeStudentModal').addEventListener('click', () =>
-                hideModal('studentModal', 'studentModalBox')
-            );
-
-            document.getElementById('openFacultyModalBtn').addEventListener('click', () =>
-                prefillAndOpenModal('faculty', 'facultySearch', 'facultyModal', 'facultyModalBox', document.getElementById('facultyForm'))
-            );
-            document.getElementById('openFacultyModalBtn2').addEventListener('click', () =>
-                prefillAndOpenModal('faculty', 'facultySearch', 'facultyModal', 'facultyModalBox', document.getElementById('facultyForm'))
-            );
-            document.getElementById('closeFacultyModal').addEventListener('click', () =>
-                hideModal('facultyModal', 'facultyModalBox')
-            );
-
-            // close modal when clicking on backdrop
-            document.querySelectorAll('.backdrop').forEach(back => {
-                back.addEventListener('click', (e) => {
-                    if (e.target === back) back.style.display = 'none';
-                });
             });
+            // set initial open display
+            const body = card.querySelector('.collapsible-body');
+            if (body) body.style.display = 'block';
+            card.classList.add('open');
+        });
 
-            // Student CRUD submit
-            document.getElementById('studentForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const data = Object.fromEntries(new FormData(e.target).entries());
-                const res = await postData('/api/admin/student', data);
-                alert(res.message || res.error);
-                if (res.message) hideModal('studentModal', 'studentModalBox');
-            });
+        // Modal helpers
+        function showModal(modalId, boxId) {
+            const modal = document.getElementById(modalId);
+            const box = document.getElementById(boxId);
+            if (!modal || !box) return;
+            modal.style.display = 'flex';
+            setTimeout(() => box.classList.add('show'), 8);
+        }
+        function hideModal(modalId, boxId) {
+            const modal = document.getElementById(modalId);
+            const box = document.getElementById(boxId);
+            if (!modal || !box) return;
+            box.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 220);
+        }
 
-            // Faculty CRUD submit
-            document.getElementById('facultyForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const data = Object.fromEntries(new FormData(e.target).entries());
-                const res = await postData('/api/admin/faculty', data);
-                alert(res.message || res.error);
-                if (res.message) hideModal('facultyModal', 'facultyModalBox');
-            });
-
-            // Delete student
-            document.getElementById('deleteStudentForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const id = document.getElementById('deleteIdStudent').value.trim();
-                if (!id) return alert('Enter ID');
-                if (!confirm(`Delete student ${id}?`)) return;
-                const r = await fetch(`/api/admin/student/${id}`, { method: 'DELETE' });
-                const d = await r.json();
-                alert(d.message || d.error);
-            });
-
-            // Delete faculty
-            document.getElementById('deleteFacultyForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const id = document.getElementById('deleteIdFaculty').value.trim();
-                if (!id) return alert('Enter ID');
-                if (!confirm(`Delete faculty ${id}?`)) return;
-                const r = await fetch(`/api/admin/faculty/${id}`, { method: 'DELETE' });
-                const d = await r.json();
-                alert(d.message || d.error);
-            });
-
-            // Load faculty list and populate assign/CA dropdowns
-            async function loadFacultyList() {
+        // Prefill and open modal for student/faculty (preserves endpoint)
+        async function prefillAndOpenModal(type, searchInputId, modalId, boxId, formEl) {
+            const idValue = document.getElementById(searchInputId).value.trim();
+            formEl.reset();
+            const passwordField = type === 'student' ? document.getElementById('studentPassword') : document.getElementById('facultyPassword');
+            passwordField.required = true;
+            passwordField.disabled = false;
+            passwordField.placeholder = 'Password (required new/change)';
+            if (idValue) {
                 try {
-                    const res = await fetch('/api/admin/faculty-list');
-                    if (!res.ok) throw new Error('Failed to load faculty list');
-                    const data = await res.json();
-                    const assignFaculty = document.getElementById('assignFaculty');
-                    const caFaculty = document.getElementById('caFaculty');
-                    assignFaculty.innerHTML = '<option value="">Select Faculty</option>';
-                    caFaculty.innerHTML = '<option value="">Select Faculty</option>';
-                    data.forEach(f => {
-                        const o = document.createElement('option');
-                        o.value = f.ssn_id;
-                        o.textContent = `${f.name} (${f.ssn_id})`;
-                        assignFaculty.appendChild(o);
-                        const o2 = o.cloneNode(true);
-                        caFaculty.appendChild(o2);
-                    });
-                } catch (err) { console.error(err); }
-            }
-
-            // Load subjects for a semester
-            async function loadSubjects() {
-                try {
-                    const sem = (document.getElementById('assignSem') || {}).value || (document.getElementById('viewSem') || {}).value;
-                    const subjectDropdown = document.getElementById('assignSubject');
-                    const viewSubject = document.getElementById('viewSubject');
-                    if (!sem) {
-                        subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
-                        viewSubject.innerHTML = '<option value="">Select Subject</option>';
-                        return;
-                    }
-                    const r = await fetch(`/api/admin/subjects-list?semester=${sem}`);
-                    if (!r.ok) throw new Error('Failed to load subjects');
+                    const r = await fetch(`/api/admin/${type}/${idValue}`);
                     const data = await r.json();
+                    if (r.ok && data.isEdit) {
+                        Object.keys(data).forEach(k => {
+                            const input = formEl.elements.namedItem(k);
+                            if (input) input.value = data[k];
+                        });
+                        passwordField.disabled = true;
+                        passwordField.placeholder = 'Password cannot be edited';
+                    } else {
+                        // not found — keep cleared for add
+                    }
+                } catch (err) {
+                    console.error('Error loading data:', err);
+                    alert('Error loading data.');
+                }
+            }
+            showModal(modalId, boxId);
+        }
+
+        // Hook modal open/close buttons
+        document.getElementById('openStudentModalBtn').addEventListener('click', () =>
+            prefillAndOpenModal('student', 'studentSearch', 'studentModal', 'studentModalBox', document.getElementById('studentForm'))
+        );
+        document.getElementById('openStudentModalBtn2').addEventListener('click', () =>
+            prefillAndOpenModal('student', 'studentSearch', 'studentModal', 'studentModalBox', document.getElementById('studentForm'))
+        );
+        document.getElementById('closeStudentModal').addEventListener('click', () =>
+            hideModal('studentModal', 'studentModalBox')
+        );
+
+        document.getElementById('openFacultyModalBtn').addEventListener('click', () =>
+            prefillAndOpenModal('faculty', 'facultySearch', 'facultyModal', 'facultyModalBox', document.getElementById('facultyForm'))
+        );
+        document.getElementById('openFacultyModalBtn2').addEventListener('click', () =>
+            prefillAndOpenModal('faculty', 'facultySearch', 'facultyModal', 'facultyModalBox', document.getElementById('facultyForm'))
+        );
+        document.getElementById('closeFacultyModal').addEventListener('click', () =>
+            hideModal('facultyModal', 'facultyModalBox')
+        );
+
+        // close modal when clicking on backdrop
+        document.querySelectorAll('.backdrop').forEach(back => {
+            back.addEventListener('click', (e) => {
+                if (e.target === back) back.style.display = 'none';
+            });
+        });
+
+        // Student CRUD submit
+        document.getElementById('studentForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            const res = await postData('/api/admin/student', data);
+            alert(res.message || res.error);
+            if (res.message) hideModal('studentModal', 'studentModalBox');
+        });
+
+        // Faculty CRUD submit
+        document.getElementById('facultyForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            const res = await postData('/api/admin/faculty', data);
+            alert(res.message || res.error);
+            if (res.message) hideModal('facultyModal', 'facultyModalBox');
+        });
+
+        // Delete student
+        document.getElementById('deleteStudentForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = document.getElementById('deleteIdStudent').value.trim();
+            if (!id) return alert('Enter ID');
+            if (!confirm(`Delete student ${id}?`)) return;
+            const r = await fetch(`/api/admin/student/${id}`, { method: 'DELETE' });
+            const d = await r.json();
+            alert(d.message || d.error);
+        });
+
+        // Delete faculty
+        document.getElementById('deleteFacultyForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = document.getElementById('deleteIdFaculty').value.trim();
+            if (!id) return alert('Enter ID');
+            if (!confirm(`Delete faculty ${id}?`)) return;
+            const r = await fetch(`/api/admin/faculty/${id}`, { method: 'DELETE' });
+            const d = await r.json();
+            alert(d.message || d.error);
+        });
+
+        // Load faculty list and populate assign/CA dropdowns
+        async function loadFacultyList() {
+            try {
+                const res = await fetch('/api/admin/faculty-list');
+                if (!res.ok) throw new Error('Failed to load faculty list');
+                const data = await res.json();
+                const assignFaculty = document.getElementById('assignFaculty');
+                const caFaculty = document.getElementById('caFaculty');
+                assignFaculty.innerHTML = '<option value="">Select Faculty</option>';
+                caFaculty.innerHTML = '<option value="">Select Faculty</option>';
+                data.forEach(f => {
+                    const o = document.createElement('option');
+                    o.value = f.ssn_id;
+                    o.textContent = `${f.name} (${f.ssn_id})`;
+                    assignFaculty.appendChild(o);
+                    const o2 = o.cloneNode(true);
+                    caFaculty.appendChild(o2);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        // Load subjects for a semester
+        async function loadSubjects() {
+            try {
+                const sem = (document.getElementById('assignSem') || {}).value || (document.getElementById('viewSem') || {}).value;
+                const subjectDropdown = document.getElementById('assignSubject');
+                const viewSubject = document.getElementById('viewSubject');
+                if (!sem) {
                     subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
                     viewSubject.innerHTML = '<option value="">Select Subject</option>';
-                    data.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.subject_code;
-                        opt.textContent = `${s.subject_code} - ${s.subject_name}`;
-                        subjectDropdown.appendChild(opt);
-                        viewSubject.appendChild(opt.cloneNode(true));
-                    });
-                } catch (err) { console.error(err); }
-            }
+                    return;
+                }
+                const r = await fetch(`/api/admin/subjects-list?semester=${sem}`);
+                if (!r.ok) throw new Error('Failed to load subjects');
+                const data = await r.json();
+                subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+                viewSubject.innerHTML = '<option value="">Select Subject</option>';
+                data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.subject_code;
+                    opt.textContent = `${s.subject_code} - ${s.subject_name}`;
+                    subjectDropdown.appendChild(opt);
+                    viewSubject.appendChild(opt.cloneNode(true));
+                });
+            } catch (err) { console.error(err); }
+        }
 
-            document.getElementById('assignSem').addEventListener('change', loadSubjects);
-            document.getElementById('viewSem').addEventListener('change', loadSubjects);
+        document.getElementById('assignSem').addEventListener('change', loadSubjects);
+        document.getElementById('viewSem').addEventListener('change', loadSubjects);
 
-            // Assign faculty to subject
-            document.getElementById('assignForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const sem = document.getElementById('assignSem').value.trim();
-                const section = document.getElementById('assignSection').value.trim();
-                const subject_code = document.getElementById('assignSubject').value;
-                const fDropdown = document.getElementById('assignFaculty');
-                const faculty_id = fDropdown.value;
-                const faculty_name = fDropdown.selectedOptions[0] ? fDropdown.selectedOptions[0].text.split('(')[0].trim() : '';
-                const res = await postData('/api/admin/assign-faculty', { faculty_id, faculty_name, subject_code, section, sem });
-                alert(res.message || res.error);
-            });
+        // Assign faculty to subject
+        document.getElementById('assignForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const sem = document.getElementById('assignSem').value.trim();
+            const section = document.getElementById('assignSection').value.trim();
+            const subject_code = document.getElementById('assignSubject').value;
+            const fDropdown = document.getElementById('assignFaculty');
+            const faculty_id = fDropdown.value;
+            const faculty_name = fDropdown.selectedOptions[0] ? fDropdown.selectedOptions[0].text.split('(')[0].trim() : '';
+            const res = await postData('/api/admin/assign-faculty', { faculty_id, faculty_name, subject_code, section, sem });
+            alert(res.message || res.error);
+        });
 
-            // View assigned subject faculty
-            document.getElementById('viewForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const sem = document.getElementById('viewSem').value.trim();
-                const section = document.getElementById('viewSection').value.trim();
-                const subject_code = document.getElementById('viewSubject').value;
-                const resultDiv = document.getElementById('viewResult');
-                resultDiv.textContent = 'Loading...';
-                try {
-                    const r = await fetch(`/api/admin/view-assigned?sem=${sem}&section=${section}&subject_code=${subject_code}`);
-                    const d = await r.json();
-                    if (d.error) resultDiv.textContent = `❌ ${d.error}`;
-                    else if (d.message) resultDiv.textContent = d.message;
-                    else resultDiv.innerHTML = `<div><strong>${d.faculty_name}</strong> (${d.faculty_id})<br><span class="small">Subject: ${d.subject_code}</span></div>`;
-                } catch (err) { console.error(err); resultDiv.textContent = '⚠️ Failed to fetch data.'; }
-            });
+        // View assigned subject faculty
+        document.getElementById('viewForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const sem = document.getElementById('viewSem').value.trim();
+            const section = document.getElementById('viewSection').value.trim();
+            const subject_code = document.getElementById('viewSubject').value;
+            const resultDiv = document.getElementById('viewResult');
+            resultDiv.textContent = 'Loading...';
+            try {
+                const r = await fetch(`/api/admin/view-assigned?sem=${sem}&section=${section}&subject_code=${subject_code}`);
+                const d = await r.json();
+                if (d.error) resultDiv.textContent = `❌ ${d.error}`;
+                else if (d.message) resultDiv.textContent = d.message;
+                else resultDiv.innerHTML = `<div><strong>${d.faculty_name}</strong> (${d.faculty_id})<br><span class="small">Subject: ${d.subject_code}</span></div>`;
+            } catch (err) { console.error(err); resultDiv.textContent = '⚠️ Failed to fetch data.'; }
+        });
 
-            // Assign class advisor
-            document.getElementById('assignCAForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const sem = document.getElementById('caSem').value.trim();
-                const section = document.getElementById('caSection').value.trim();
-                const fDropdown = document.getElementById('caFaculty');
-                const faculty_id = fDropdown.value;
-                const faculty_name = fDropdown.selectedOptions[0] ? fDropdown.selectedOptions[0].text.split('(')[0].trim() : '';
-                const res = await postData('/api/admin/assign-ca', { faculty_id, faculty_name, sem, section });
-                alert(res.message || res.error);
-            });
+        // Assign class advisor
+        document.getElementById('assignCAForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const sem = document.getElementById('caSem').value.trim();
+            const section = document.getElementById('caSection').value.trim();
+            const fDropdown = document.getElementById('caFaculty');
+            const faculty_id = fDropdown.value;
+            const faculty_name = fDropdown.selectedOptions[0] ? fDropdown.selectedOptions[0].text.split('(')[0].trim() : '';
+            const res = await postData('/api/admin/assign-ca', { faculty_id, faculty_name, sem, section });
+            alert(res.message || res.error);
+        });
 
-            // View class advisor
-            document.getElementById('viewCAForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const sem = document.getElementById('viewCASem').value.trim();
-                const section = document.getElementById('viewCASection').value.trim();
-                const resultDiv = document.getElementById('viewCAResult');
-                resultDiv.textContent = 'Loading...';
-                try {
-                    const r = await fetch(`/api/admin/view-ca?sem=${sem}&section=${section}`);
-                    const d = await r.json();
-                    if (d.error) resultDiv.textContent = `❌ ${d.error}`;
-                    else if (d.message) resultDiv.textContent = d.message;
-                    else resultDiv.innerHTML = `<div><strong>${d.faculty_name}</strong> (${d.faculty_id})</div>`;
-                } catch (err) { console.error(err); resultDiv.textContent = '⚠️ Failed to fetch data.'; }
-            });
+        // View class advisor
+        document.getElementById('viewCAForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const sem = document.getElementById('viewCASem').value.trim();
+            const section = document.getElementById('viewCASection').value.trim();
+            const resultDiv = document.getElementById('viewCAResult');
+            resultDiv.textContent = 'Loading...';
+            try {
+                const r = await fetch(`/api/admin/view-ca?sem=${sem}&section=${section}`);
+                const d = await r.json();
+                if (d.error) resultDiv.textContent = `❌ ${d.error}`;
+                else if (d.message) resultDiv.textContent = d.message;
+                else resultDiv.innerHTML = `<div><strong>${d.faculty_name}</strong> (${d.faculty_id})</div>`;
+            } catch (err) { console.error(err); resultDiv.textContent = '⚠️ Failed to fetch data.'; }
+        });
 
-            // View students by sem & section
-            document.getElementById('viewStudentsForm').addEventListener('submit', async e => {
-                e.preventDefault();
-                const sem = document.getElementById('studentSem').value.trim();
-                const section = document.getElementById('studentSection').value.trim();
-                const resultDiv = document.getElementById('studentsResult');
-                resultDiv.innerHTML = 'Loading...';
-                try {
-                    const r = await fetch(`/api/admin/view-students?sem=${sem}&section=${section}`);
-                    const d = await r.json();
-                    if (d.error) { resultDiv.innerHTML = `<div style="color:#dc2626">${d.error}</div>`; return; }
-                    if (d.message) { resultDiv.innerHTML = `<div>${d.message}</div>`; return; }
-                    let html = `<table><thead><tr><th>Photo</th><th>USN</th><th>Name</th><th>Email</th><th>Section</th><th>Sem</th><th>Phone</th></tr></thead><tbody>`;
-                    d.forEach(s => {
-                        html += `<tr>
+        // View students by sem & section
+        document.getElementById('viewStudentsForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const sem = document.getElementById('studentSem').value.trim();
+            const section = document.getElementById('studentSection').value.trim();
+            const resultDiv = document.getElementById('studentsResult');
+            resultDiv.innerHTML = 'Loading...';
+            try {
+                const r = await fetch(`/api/admin/view-students?sem=${sem}&section=${section}`);
+                const d = await r.json();
+                if (d.error) { resultDiv.innerHTML = `<div style="color:#dc2626">${d.error}</div>`; return; }
+                if (d.message) { resultDiv.innerHTML = `<div>${d.message}</div>`; return; }
+                let html = `<table><thead><tr><th>Photo</th><th>USN</th><th>Name</th><th>Email</th><th>Section</th><th>Sem</th><th>Phone</th></tr></thead><tbody>`;
+                d.forEach(s => {
+                    html += `<tr>
               <td>${s.photo ? `<img src="${s.photo}" class="avatar" alt="photo">` : `<div style="width:40px;height:40px;border-radius:999px;background:#f3f4f6;display:grid;place-items:center;color:#9ca3af">N/A</div>`}</td>
               <td>${s.usn}</td><td>${s.name}</td><td>${s.email}</td><td style="text-align:center">${s.section}</td><td style="text-align:center">${s.sem}</td><td>${s.phone || '-'}</td>
             </tr>`;
-                    });
-                    html += `</tbody></table>`;
-                    resultDiv.innerHTML = html;
-                } catch (err) { console.error(err); resultDiv.innerHTML = '⚠️ Failed to fetch data.'; }
-            });
+                });
+                html += `</tbody></table>`;
+                resultDiv.innerHTML = html;
+            } catch (err) { console.error(err); resultDiv.innerHTML = '⚠️ Failed to fetch data.'; }
+        });
 
-            // View all faculty
-            document.getElementById('viewFacultyBtn').addEventListener('click', async () => {
-                const resultDiv = document.getElementById('facultyResult');
-                resultDiv.innerHTML = 'Loading...';
-                try {
-                    const r = await fetch('/api/admin/view-faculty');
-                    const d = await r.json();
-                    if (d.error) { resultDiv.innerHTML = `<div style="color:#dc2626">${d.error}</div>`; return; }
-                    if (d.message) { resultDiv.innerHTML = `<div>${d.message}</div>`; return; }
-                    let html = `<table><thead><tr><th>Photo</th><th>SSN</th><th>Name</th><th>Email</th><th>Position</th><th>Phone</th></tr></thead><tbody>`;
-                    d.forEach(f => {
-                        html += `<tr>
+        // View all faculty
+        document.getElementById('viewFacultyBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('facultyResult');
+            resultDiv.innerHTML = 'Loading...';
+            try {
+                const r = await fetch('/api/admin/view-faculty');
+                const d = await r.json();
+                if (d.error) { resultDiv.innerHTML = `<div style="color:#dc2626">${d.error}</div>`; return; }
+                if (d.message) { resultDiv.innerHTML = `<div>${d.message}</div>`; return; }
+                let html = `<table><thead><tr><th>Photo</th><th>SSN</th><th>Name</th><th>Email</th><th>Position</th><th>Phone</th></tr></thead><tbody>`;
+                d.forEach(f => {
+                    html += `<tr>
               <td>${f.photo ? `<img src="${f.photo}" class="avatar" alt="photo">` : `<div style="width:40px;height:40px;border-radius:999px;background:#f3f4f6;display:grid;place-items:center;color:#9ca3af">N/A</div>`}</td>
               <td>${f.ssn_id}</td><td>${f.name}</td><td>${f.email}</td><td>${f.position || '-'}</td><td>${f.phone || '-'}</td>
             </tr>`;
-                    });
-                    html += `</tbody></table>`;
-                    resultDiv.innerHTML = html;
-                } catch (err) { console.error(err); resultDiv.innerHTML = '⚠️ Failed to fetch data.'; }
-            });
-
-            // Initialize lists
-            loadFacultyList();
+                });
+                html += `</tbody></table>`;
+                resultDiv.innerHTML = html;
+            } catch (err) { console.error(err); resultDiv.innerHTML = '⚠️ Failed to fetch data.'; }
         });
-    </script>
+
+        // Initialize lists
+        loadFacultyList();
+    });
+</script>
 </body>
 
 </html>

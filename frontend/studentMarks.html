@@ -96,28 +96,22 @@
             return 0;
         }
 
-        // ✅ Special override rules
         function evaluateSubject(subject) {
             const credits = Number(subject.credit) || 0;
             const internal = Number(subject.internal) || 0;
             const external = subject.external === null || subject.external === "" ? null : Number(subject.external);
 
-            // If credit = 0 → always pass, total from backend
             if (credits === 0) {
                 return {
                     total: Number(subject.total) || internal + (external || 0),
                     result: "P"
                 };
             }
-
-            // If external is missing → internal is considered out of 100
             if (external === null) {
                 const total = internal;
-                const result = internal >= 40 ? "P" : "F";
-                return { total, result };
+                return { total, result: internal >= 40 ? "P" : "F" };
             }
 
-            // Otherwise use backend values
             return {
                 total: Number(subject.total),
                 result: subject.result
@@ -126,18 +120,17 @@
 
         async function saveSGPACGPA(usn, semester, sgpa, cgpa) {
             try {
-                const res = await fetch("/api/marks/saveSgpaCgpa", {
+                await fetch("/api/marks/saveSgpaCgpa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ usn, semester, sgpa, cgpa })
                 });
-                if (!res.ok) throw new Error("Failed to save SGPA/CGPA");
-                console.log("SGPA & CGPA saved!");
             } catch (err) {
                 console.error("Failed to save SGPA & CGPA:", err);
             }
         }
 
+        // ===================== MAIN SCRIPT =====================
         document.addEventListener('DOMContentLoaded', async () => {
 
             const yearGrid = document.getElementById('year-grid');
@@ -146,6 +139,7 @@
             const marksTableBody = document.getElementById('marks-table-body');
             const marksTitle = document.getElementById('marks-title');
             const closeModalBtn = document.getElementById('close-modal-btn');
+
             const fetchBtn = document.getElementById('fetchBtn');
             const usnInput = document.getElementById('usnInput');
             const usnContainer = document.getElementById('usn-container');
@@ -153,20 +147,25 @@
             let loggedInUsn = null;
             let subjects = [];
 
-            // Check session
+            // ===================== CHECK LOGIN =====================
             try {
-                const res = await fetch("/api/marks/me", { credentials: "include" });
+                const res = await fetch("/api/current-student", { credentials: "include" });
                 if (res.ok) {
                     const data = await res.json();
-                    loggedInUsn = data.usn;
+                    loggedInUsn = data.usn;     // Logged in student's USN
                 }
-            } catch { }
+            } catch {
+                console.log("Session check failed.");
+            }
 
-            // Show/hide input
+            // ===================== LOGGED IN → AUTO LOAD =====================
             if (loggedInUsn) {
-                usnContainer.style.display = "none";
+                usnContainer.style.display = "none"; // Hide USN field
                 await loadStudentData(loggedInUsn);
-            } else {
+            }
+
+            // ===================== NOT LOGGED → SHOW INPUT =====================
+            else {
                 usnContainer.style.display = "flex";
                 fetchBtn.addEventListener("click", async () => {
                     const usn = usnInput.value.trim().toUpperCase();
@@ -178,6 +177,7 @@
                 });
             }
 
+            // ===================== LOAD STUDENT MARKS =====================
             async function loadStudentData(usn) {
 
                 yearGrid.innerHTML = `<p class="text-gray-300 text-center">Loading...</p>`;
@@ -189,30 +189,28 @@
                     const data = await response.json();
                     subjects = data.subjects;
 
-                    // ✅ Calculate CGPA using override logic
-                    let totalCreditsAll = 0, totalPointsAll = 0;
+                    // -------- CGPA Calculation --------
+                    let totalCredits = 0, totalPoints = 0;
 
                     subjects.forEach(s => {
                         const credits = Number(s.credit) || 0;
                         const { total, result } = evaluateSubject(s);
 
-                        if (credits === 0) return; // ignore credit 0 in CGPA
-                        if (result === "P") {
-                            totalCreditsAll += credits;
-                            totalPointsAll += credits * getGradePoint(total);
+                        if (credits > 0 && result === "P") {
+                            totalCredits += credits;
+                            totalPoints += credits * getGradePoint(total);
                         }
                     });
 
-                    const cgpa = totalCreditsAll > 0 ? (totalPointsAll / totalCreditsAll).toFixed(2) : "0.00";
+                    const cgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
                     cgpaValue.textContent = cgpa;
 
-                    // Render year grid
+                    // -------- Render Year Grid --------
                     const semestersWithData = new Set(subjects.map(s => s.semester));
                     const semestersByYear = { 1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8] };
 
                     yearGrid.innerHTML = "";
                     for (const year in semestersByYear) {
-
                         const yearBox = document.createElement("div");
                         yearBox.className = "year-box p-6 bg-white/10 border border-white/20 rounded-lg text-white";
 
@@ -221,12 +219,12 @@
                         semestersByYear[year].forEach(sem => {
                             const isAvailable = semestersWithData.has(sem);
                             semesterButtonsHTML += `
-                            <button class="sem-btn m-2 px-4 py-2 rounded-md transition
-                                ${isAvailable ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                        <button class="sem-btn m-2 px-4 py-2 rounded-md transition
+                            ${isAvailable ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                                     : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50'}"
-                                data-sem="${sem}" ${!isAvailable ? "disabled" : ""}>
-                                Sem ${sem}
-                            </button>
+                            data-sem="${sem}" ${!isAvailable ? "disabled" : ""}>
+                            Sem ${sem}
+                        </button>
                         `;
                         });
 
@@ -234,34 +232,30 @@
                         <h2 class="text-2xl text-center font-bold">Year ${year}</h2>
                         <div class="mt-4 flex justify-center flex-wrap">${semesterButtonsHTML}</div>
                     `;
-
                         yearGrid.appendChild(yearBox);
                     }
 
                 } catch (err) {
-                    yearGrid.innerHTML = `<p class="text-red-400 text-center">Error: ${err.message}</p>`;
                     cgpaValue.textContent = "0.00";
+                    yearGrid.innerHTML = `<p class="text-red-400 text-center">Error: ${err.message}</p>`;
                 }
             }
 
-            // ✅ Semester modal logic
+            // ===================== SEMESTER MODAL =====================
             yearGrid.addEventListener("click", async (e) => {
-
                 const btn = e.target.closest(".sem-btn");
                 if (!btn) return;
 
                 const semester = parseInt(btn.dataset.sem);
                 const semesterSubjects = subjects.filter(s => s.semester === semester);
 
-                // ✅ SGPA calculation with overrides
                 let totalCredits = 0, totalPoints = 0;
 
                 semesterSubjects.forEach(s => {
                     const credits = Number(s.credit) || 0;
                     const { total, result } = evaluateSubject(s);
 
-                    if (credits === 0) return; // ignore credit 0
-                    if (result === "P") {
+                    if (credits > 0 && result === "P") {
                         totalCredits += credits;
                         totalPoints += credits * getGradePoint(total);
                     }
@@ -269,15 +263,13 @@
 
                 const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
 
-                // ✅ Recalculate CGPA also
+                // Recalculate CGPA
                 let totalCreditsAll = 0, totalPointsAll = 0;
-
                 subjects.forEach(s => {
                     const credits = Number(s.credit) || 0;
                     const { total, result } = evaluateSubject(s);
 
-                    if (credits === 0) return;
-                    if (result === "P") {
+                    if (credits > 0 && result === "P") {
                         totalCreditsAll += credits;
                         totalPointsAll += credits * getGradePoint(total);
                     }
@@ -287,10 +279,10 @@
                 cgpaValue.textContent = cgpa;
 
                 // Save SGPA/CGPA
-                const usn = usnInput.value || loggedInUsn;
+                const usn = loggedInUsn || usnInput.value;
                 await saveSGPACGPA(usn, semester, sgpa, cgpa);
 
-                // ✅ Update modal UI
+                // Update Modal
                 marksTitle.innerHTML = `
                 Semester ${semester} Results
                 <span class="ml-4 px-3 py-1 bg-cyan-500 text-white text-sm rounded-lg">
@@ -301,7 +293,6 @@
                 marksTableBody.innerHTML = "";
 
                 semesterSubjects.forEach(subject => {
-
                     const { total, result } = evaluateSubject(subject);
                     const isPass = result === "P";
 
@@ -318,10 +309,8 @@
                         ${result}
                     </td>
                 `;
-
                     marksTableBody.appendChild(row);
                 });
-
 
                 marksModal.classList.remove("hidden");
             });
@@ -330,12 +319,11 @@
             marksModal.addEventListener("click", e => {
                 if (e.target === marksModal) marksModal.classList.add("hidden");
             });
-
         });
 
         async function goHome() {
             try {
-                const res = await fetch("/api/marks/me", { credentials: "include" });
+                const res = await fetch("/api/current-student", { credentials: "include" });
                 window.location.href = res.ok ? "studentHome.html" : "home.html";
             } catch {
                 window.location.href = "home.html";
@@ -343,8 +331,6 @@
         }
 
     </script>
-
-
 </body>
 
 </html>

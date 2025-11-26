@@ -5,112 +5,217 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Profile</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        .modal-transition {
-            transition: opacity 0.3s ease-in-out;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
 
-        body {
-            background-color: #ffe6ef;
-            background-image: radial-gradient(circle at 1px 1px, rgba(255, 161, 186, 0.35) 1px, transparent 0);
-            background-size: 20px 20px;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-input {
+            background: rgba(243, 244, 246, 0.8);
+            border: 1px solid rgba(229, 231, 235, 1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            background: #fff;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(118, 75, 162, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
         }
     </style>
 </head>
 
-<body class="min-h-screen p-6 flex flex-col items-center">
+<body class="p-4 md:p-8 flex flex-col items-center justify-center">
 
-    <!-- Back Btn -->
-    <button onclick="goHome()"
-        class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-6 rounded-full shadow-lg mb-6 transition">
-        Back
-    </button>
+    <!-- Back Button -->
+    <div class="w-full max-w-4xl mb-6 fade-in-up">
+        <button onclick="goHome()" class="group flex items-center text-white hover:text-gray-200 transition-colors">
+            <div class="bg-white/20 p-2 rounded-full mr-3 group-hover:bg-white/30 transition-all">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <span class="font-medium">Back to Dashboard</span>
+        </button>
+    </div>
 
-    <!-- ================= Student Profile Card ================= -->
-    <section id="profile"
-        class="bg-white w-full max-w-xl p-8 rounded-2xl shadow-xl border border-gray-200 backdrop-blur-xl text-center space-y-4">
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <!-- Avatar -->
-        <div class="flex flex-col items-center">
-            <div id="student-avatar"
-                class="w-28 h-28 rounded-full bg-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-pink-200 overflow-hidden cursor-pointer transition hover:scale-105">
-                ?
+        <!-- Profile Section -->
+        <section id="profile"
+            class="glass-panel rounded-3xl shadow-2xl p-8 text-center fade-in-up delay-100 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
+
+            <div class="relative z-10">
+                <!-- Avatar -->
+                <div class="relative inline-block group">
+                    <div id="student-avatar"
+                        class="w-32 h-32 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 text-4xl font-bold shadow-xl ring-4 ring-white mx-auto overflow-hidden object-cover">
+                        <i class="fas fa-user"></i>
+                    </div>
+
+                    <button onclick="document.getElementById('profilePhotoInput').click()"
+                        class="absolute bottom-0 right-0 bg-white text-purple-600 p-2 rounded-full shadow-lg hover:bg-gray-50 transition-all transform hover:scale-110 border border-gray-100"
+                        title="Upload Photo">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+
+                <input type="file" id="profilePhotoInput" accept="image/*" class="hidden"
+                    onchange="uploadProfilePhoto(event)">
+
+                <h2 id="student-name" class="text-2xl font-bold text-gray-800 mt-6 mb-1">Loading...</h2>
+                <p id="student-usn" class="text-purple-600 font-medium mb-6">Loading...</p>
+
+                <div class="bg-gray-50 rounded-2xl p-6 mb-6 text-left space-y-3 border border-gray-100">
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <span id="student-sem" class="font-medium"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-users"></i></div>
+                        <span id="student-section" class="font-medium"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-phone"></i></div>
+                        <span id="student-phone" class="font-medium"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-envelope"></i></div>
+                        <span id="student-email" class="font-medium truncate"></span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl p-4 mb-8 border border-blue-100">
+                    <p id="class-advisor" class="text-blue-800 font-semibold text-sm">
+                        <i class="fas fa-chalkboard-teacher mr-2"></i> Class Advisor: Loading...
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button id="studentChangePass"
+                        class="btn-secondary w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-key text-gray-400"></i> Change Password
+                    </button>
+
+                    <form action="/logout" method="POST" class="w-full">
+                        <button type="submit"
+                            class="w-full py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="glass-panel rounded-3xl shadow-2xl p-8 fade-in-up delay-200 flex flex-col h-full">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Get in Touch</h2>
+                <p class="text-gray-500">Have questions? Send us a message directly.</p>
             </div>
 
-            <input type="file" id="profilePhotoInput" accept="image/*" class="hidden"
-                onchange="uploadProfilePhoto(event)">
+            <div class="space-y-6 flex-grow">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Email</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-gray-400"><i class="fas fa-envelope"></i></span>
+                        <input id="email" type="email" placeholder="name@example.com"
+                            class="glass-input w-full pl-10 pr-4 py-3 rounded-xl outline-none text-gray-700 placeholder-gray-400">
+                    </div>
+                </div>
 
-            <button onclick="document.getElementById('profilePhotoInput').click()"
-                class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg shadow transition">
-                Upload Photo
-            </button>
-        </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                    <textarea id="message" placeholder="How can we help you?"
+                        class="glass-input w-full p-4 rounded-xl h-40 outline-none text-gray-700 placeholder-gray-400 resize-none"></textarea>
+                </div>
+            </div>
 
-        <h2 id="student-name" class="text-3xl font-bold text-gray-800 mt-4">Loading...</h2>
-
-        <div class="text-gray-600 space-y-1">
-            <p id="student-usn"></p>
-            <p id="student-section"></p>
-            <p id="student-sem"></p>
-            <p id="student-phone"></p>
-            <p id="student-email"></p>
-        </div>
-
-        <p id="class-advisor" class="text-gray-900 font-semibold mt-4">Class Advisor: Loading...</p>
-
-        <!-- Buttons -->
-        <div class="mt-8 flex flex-col items-center space-y-3">
-            <button id="studentChangePass"
-                class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-600 transition w-48">
-                Change Password
-            </button>
-
-            <form action="/logout" method="POST">
-                <button type="submit"
-                    class="bg-red-500 text-white px-6 py-2 rounded-lg shadow hover:bg-red-600 transition w-48">
-                    Logout
+            <div class="mt-8">
+                <button type="button" onclick="sendMessage()"
+                    class="btn-primary w-full text-white font-semibold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                    <span>Send Message</span>
+                    <i class="fas fa-paper-plane text-sm"></i>
                 </button>
-            </form>
-        </div>
-    </section>
 
-    <!-- ================= Contact Section ================= -->
-    <section id="contact"
-        class="bg-white mt-10 w-full max-w-xl p-8 rounded-2xl shadow-xl border border-gray-200 backdrop-blur-xl text-center">
+                <div id="loading" class="hidden mt-4 flex justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                </div>
+            </div>
+        </section>
+    </div>
 
-        <h2 class="text-3xl font-bold text-gray-800">Contact Us</h2>
-
-        <input id="email" type="text" placeholder="Enter your email"
-            class="mt-4 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none">
-
-        <textarea id="message" placeholder="Your message"
-            class="mt-4 w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-pink-500 outline-none"></textarea>
-
-        <button type="button" onclick="sendMessage()"
-            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow transition">
-            Send Message
-        </button>
-
-        <div id="loading" class="w-12 h-12 mt-4 hidden mx-auto">
-            <img src="./images/spinner.svg" alt="Loading..." class="w-full h-full">
-        </div>
-    </section>
-
-    <!-- ================= Photo Modal ================= -->
+    <!-- Photo Modal -->
     <div id="photoModal"
-        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 modal-transition"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
         onclick="closePhotoModal()">
-        <div class="relative bg-white rounded-full p-2 shadow-2xl" onclick="event.stopPropagation()">
-            <img id="modalPhoto" src="" class="w-72 h-72 object-cover rounded-full shadow-lg">
+        <div class="relative bg-white rounded-2xl p-2 shadow-2xl max-w-lg w-full transform transition-all scale-100"
+            onclick="event.stopPropagation()">
             <button
-                class="absolute top-0 right-0 -mt-3 -mr-3 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-gray-700 transition"
-                onclick="closePhotoModal()">&times;</button>
+                class="absolute -top-4 -right-4 bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors z-10"
+                onclick="closePhotoModal()">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+            <img id="modalPhoto" src="" class="w-full h-auto rounded-xl shadow-inner">
         </div>
     </div>
 
-    <!-- ================= JS ================= -->
     <script>
         let currentPhotoUrl = null;
 
@@ -124,45 +229,50 @@
                 if (profile.error) return alert(profile.error);
 
                 document.getElementById("student-name").textContent = profile.name;
-                document.getElementById("student-usn").textContent = `USN: ${profile.usn}`;
-                document.getElementById("student-section").textContent = `Section: ${profile.section}`;
-                document.getElementById("student-sem").textContent = `Semester: ${profile.sem}`;
-                document.getElementById("student-phone").textContent = `Phone: ${profile.phone}`;
-                document.getElementById("student-email").textContent = `Email: ${profile.email}`;
+                document.getElementById("student-usn").textContent = profile.usn;
+                document.getElementById("student-section").textContent = profile.section;
+                document.getElementById("student-sem").textContent = `Semester ${profile.sem}`;
+                document.getElementById("student-phone").textContent = profile.phone;
+                document.getElementById("student-email").textContent = profile.email;
 
                 // Avatar logic
-                const initials = profile.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
-                const avatar = document.getElementById("student-avatar");
+                const initials = profile.name
+                    .split(" ")
+                    .map(w => w[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
 
+                const avatar = document.getElementById("student-avatar");
                 currentPhotoUrl = profile.photoUrl;
 
                 if (currentPhotoUrl) {
-                    avatar.innerHTML = `<img src="${currentPhotoUrl}" class="w-full h-full object-cover rounded-full">`;
+                    avatar.innerHTML = `<img src="${currentPhotoUrl}" class="w-full h-full object-cover" onclick="openPhotoModal()">`;
                     avatar.style.cursor = "pointer";
                 } else {
-                    avatar.textContent = initials;
+                    avatar.innerHTML = `<span class="text-4xl">${initials}</span>`;
                     avatar.style.cursor = "default";
                 }
 
                 // Class Advisor
-                ca.textContent = "Class Advisor: Fetching...";
+                ca.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Fetching Advisor...';
 
-                const caRes = await fetch(`/api/admin/class-advisor/${profile.section}`);
+                const caRes = await fetch(`/api/admin/view-ca?sem=${profile.sem}&section=${profile.section}`);
                 const caData = await caRes.json();
 
                 if (caRes.ok && caData.faculty_name) {
-                    ca.textContent = `Class Advisor: ${caData.faculty_name}`;
+                    ca.innerHTML = `<i class="fas fa-chalkboard-teacher mr-2"></i> Class Advisor: ${caData.faculty_name}`;
                 } else {
-                    ca.textContent = "Class Advisor: Not yet assigned.";
+                    ca.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i> Class Advisor: Not yet assigned.`;
                 }
 
                 document.getElementById("studentChangePass").onclick = () => {
                     window.location.href = "changepass.html";
                 };
 
-            } catch {
-                ca.textContent = "Class Advisor: Network error.";
-                alert("Failed to load profile.");
+            } catch (e) {
+                console.error(e);
+                ca.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i> Advisor info unavailable`;
             }
         }
 
@@ -173,18 +283,24 @@
             const formData = new FormData();
             formData.append("photo", file);
 
+            const avatar = document.getElementById("student-avatar");
+            const originalContent = avatar.innerHTML;
+
+            avatar.innerHTML = `<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>`;
+
             try {
                 const res = await fetch("/api/profile-photo", { method: "POST", body: formData });
                 const data = await res.json();
 
                 if (data.success) {
-                    alert("Profile photo updated!");
                     loadProfile();
                 } else {
                     alert(data.error || "Upload failed");
+                    avatar.innerHTML = originalContent;
                 }
             } catch {
                 alert("Error uploading photo.");
+                avatar.innerHTML = originalContent;
             }
         }
 
@@ -204,10 +320,13 @@
             const email = document.getElementById("email").value;
             const msg = document.getElementById("message").value;
             const loader = document.getElementById("loading");
+            const btn = document.querySelector('button[onclick="sendMessage()"]');
 
             if (!email || !msg) return alert("Please fill both email and message.");
 
             loader.classList.remove("hidden");
+            btn.disabled = true;
+            btn.classList.add("opacity-50", "cursor-not-allowed");
 
             try {
                 const res = await fetch("/contact", {
@@ -217,7 +336,7 @@
                 });
 
                 const data = await res.json();
-                alert(data.success ? "Message sent!" : data.error);
+                alert(data.success ? "Message sent successfully!" : data.error);
 
                 if (data.success) {
                     document.getElementById("email").value = "";
@@ -225,10 +344,12 @@
                 }
 
             } catch {
-                alert("Error sending message.");
+                alert("Error sending message. Please try again.");
             }
 
             loader.classList.add("hidden");
+            btn.disabled = false;
+            btn.classList.remove("opacity-50", "cursor-not-allowed");
         }
 
         function goHome() {
@@ -237,6 +358,7 @@
 
         document.addEventListener("DOMContentLoaded", loadProfile);
     </script>
+
 
 </body>
 

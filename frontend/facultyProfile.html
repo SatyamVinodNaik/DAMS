@@ -5,111 +5,184 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Faculty Profile</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        .modal-transition {
-            transition: opacity 0.3s ease-in-out;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
 
-        body {
-            background-color: #f0f4ff;
-            background-image: radial-gradient(circle at 1px 1px, rgba(80, 120, 255, 0.2) 1px, transparent 0);
-            background-size: 20px 20px;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-input {
+            background: rgba(243, 244, 246, 0.8);
+            border: 1px solid rgba(229, 231, 235, 1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            background: #fff;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(118, 75, 162, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
-<body class="min-h-screen p-6 flex flex-col items-center">
+<body class="p-4 md:p-8 flex flex-col items-center justify-center">
 
     <!-- Back Button -->
-    <button onclick="goHome()"
-        class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-6 rounded-full shadow-lg mb-6 transition">
-        Back
-    </button>
-
-    <!-- ================= Faculty Profile Card ================= -->
-    <div id="faculty-profile-card"
-        class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-xl border border-gray-200 backdrop-blur-xl">
-
-        <!-- Avatar -->
-        <div class="flex flex-col items-center">
-            <div id="faculty-avatar"
-                class="w-28 h-28 rounded-full bg-blue-900 flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-blue-200 overflow-hidden cursor-pointer transition hover:scale-105"
-                title="Click to view full photo">
-                ?
+    <div class="w-full max-w-4xl mb-6 fade-in-up">
+        <button onclick="goHome()" class="group flex items-center text-white hover:text-gray-200 transition-colors">
+            <div class="bg-white/20 p-2 rounded-full mr-3 group-hover:bg-white/30 transition-all">
+                <i class="fas fa-arrow-left"></i>
             </div>
-
-            <button onclick="document.getElementById('profilePhotoInput').click()"
-                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition">
-                Upload Photo
-            </button>
-            <input type="file" id="profilePhotoInput" accept="image/*" class="hidden"
-                onchange="uploadProfilePhoto(event)">
-        </div>
-
-        <h2 class="text-3xl font-bold text-gray-800 text-center mt-6" id="faculty-name">Loading...</h2>
-
-        <div class="mt-4 space-y-1 text-center text-gray-600">
-            <p id="faculty-ssn"></p>
-            <p id="faculty-position"></p>
-            <p id="faculty-phone"></p>
-            <p id="faculty-email"></p>
-        </div>
-
-        <!-- Buttons -->
-        <div class="mt-8 flex flex-col items-center space-y-3">
-            <button id="facultyChangePass"
-                class="bg-yellow-500 text-white px-6 py-2 rounded-lg shadow hover:bg-yellow-600 transition w-48">
-                Change Password
-            </button>
-
-            <form action="/logout" method="POST">
-                <button type="submit"
-                    class="bg-red-500 text-white px-6 py-2 rounded-lg shadow hover:bg-red-600 transition w-48">
-                    Logout
-                </button>
-            </form>
-        </div>
+            <span class="font-medium">Back to Dashboard</span>
+        </button>
     </div>
 
-    <!-- ================= Contact Admin ================= -->
-    <section id="contact"
-        class="bg-white shadow-xl rounded-2xl p-8 mt-10 w-full max-w-xl border border-gray-200 backdrop-blur-xl">
-        <h2 class="text-3xl font-bold text-gray-800 text-center">Contact Admin</h2>
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <input id="email" type="text" placeholder="Enter your email"
-            class="mt-4 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        <!-- Faculty Profile Panel -->
+        <section class="glass-panel rounded-3xl shadow-2xl p-8 text-center fade-in-up relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
 
-        <textarea id="message" placeholder="Your message"
-            class="mt-4 w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            <div class="relative z-10">
 
-        <button type="button" onclick="sendMessage()"
-            class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition shadow">
-            Send Message
-        </button>
+                <!-- Avatar -->
+                <div class="relative inline-block group">
+                    <div id="faculty-avatar"
+                        class="w-32 h-32 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-700 text-4xl font-bold shadow-xl ring-4 ring-white mx-auto overflow-hidden cursor-pointer">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
 
-        <div id="loading" class="w-12 h-12 mt-4 hidden mx-auto">
-            <img src="./images/spinner.svg" alt="Loading..." class="w-full h-full">
-        </div>
-    </section>
+                    <button onclick="document.getElementById('profilePhotoInput').click()"
+                        class="absolute bottom-0 right-0 bg-white text-purple-600 p-2 rounded-full shadow-lg hover:bg-gray-50 transition-all border border-gray-100"
+                        title="Upload Photo">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <input type="file" id="profilePhotoInput" accept="image/*" class="hidden"
+                    onchange="uploadProfilePhoto(event)">
 
-    <!-- ================= Full Photo Modal ================= -->
-    <div id="photoModal"
-        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 modal-transition"
+                <h2 id="faculty-name" class="text-2xl font-bold text-gray-800 mt-6 mb-1">Loading...</h2>
+
+                <div class="bg-gray-50 rounded-2xl p-6 mb-6 text-left space-y-3 border border-gray-100">
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-id-card-alt"></i>
+                        </div>
+                        <span id="faculty-ssn"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-briefcase"></i></div>
+                        <span id="faculty-position"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-envelope"></i></div>
+                        <span id="faculty-email"></span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <div class="w-8 flex justify-center mr-3 text-purple-500"><i class="fas fa-phone"></i></div>
+                        <span id="faculty-phone"></span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button id="facultyChangePass"
+                        class="btn-secondary w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-key text-gray-400"></i> Change Password
+                    </button>
+
+                    <form action="/logout" method="POST" class="w-full">
+                        <button type="submit"
+                            class="w-full py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Contact Admin -->
+        <section class="glass-panel rounded-3xl shadow-2xl p-8 fade-in-up flex flex-col h-full">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Contact Admin</h2>
+
+            <div class="flex-grow space-y-6">
+                <input id="email" type="email" placeholder="Enter your email"
+                    class="glass-input w-full p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400">
+
+                <textarea id="message" placeholder="Write your message..."
+                    class="glass-input w-full p-4 rounded-xl h-40 outline-none text-gray-700 placeholder-gray-400 resize-none"></textarea>
+            </div>
+
+            <button onclick="sendMessage()"
+                class="mt-6 btn-primary w-full text-white font-semibold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                <span>Send Message</span>
+                <i class="fas fa-paper-plane text-sm"></i>
+            </button>
+
+            <div id="loading" class="hidden mt-4 flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Full Image Modal -->
+    <div id="photoModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center"
         onclick="closePhotoModal()">
-        <div class="relative bg-white rounded-full p-2 shadow-2xl" onclick="event.stopPropagation()">
-            <img id="modalPhoto" src="" alt="Full Profile Photo" class="w-72 h-72 object-cover rounded-full shadow-lg">
-            <button
-                class="absolute top-0 right-0 -mt-3 -mr-3 bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-gray-700 transition"
-                onclick="closePhotoModal()">&times;</button>
-        </div>
+        <img id="modalPhoto" class="w-80 h-80 object-cover rounded-full shadow-2xl border-4 border-white"
+            onclick="event.stopPropagation()">
     </div>
 
     <script>
         let currentPhotoUrl = null;
 
-        // Load Faculty Profile
         async function loadFacultyProfile() {
             try {
                 const res = await fetch("/api/profile");
@@ -117,109 +190,71 @@
 
                 if (data.error) return alert(data.error);
 
-                document.getElementById("faculty-name").textContent = data.name || "Unknown";
-                document.getElementById("faculty-ssn").textContent = `SSN ID: ${data.ssn_id || "N/A"}`;
-                document.getElementById("faculty-position").textContent = `Position: ${data.position || "N/A"}`;
-                document.getElementById("faculty-phone").textContent = `Phone: ${data.phone || "N/A"}`;
-                document.getElementById("faculty-email").textContent = `Email: ${data.email || "N/A"}`;
+                document.getElementById("faculty-name").textContent = data.name;
+                document.getElementById("faculty-ssn").textContent = `Faculty ID: ${data.ssn_id}`;
+                document.getElementById("faculty-position").textContent = `Position: ${data.position}`;
+                document.getElementById("faculty-phone").textContent = `${data.phone}`;
+                document.getElementById("faculty-email").textContent = `${data.email}`;
 
-                // Avatar
-                const initials = (data.name || "?")
-                    .split(" ")
-                    .map(w => w[0]?.toUpperCase())
-                    .slice(0, 2)
-                    .join("");
-
+                const initials = data.name.split(" ").map(w => w[0]).join("");
                 const avatar = document.getElementById("faculty-avatar");
                 currentPhotoUrl = data.photoUrl;
 
                 if (currentPhotoUrl) {
-                    avatar.innerHTML = `<img src="${currentPhotoUrl}" alt="Profile Photo" class="w-full h-full object-cover rounded-full">`;
-                    avatar.onclick = openPhotoModal;
+                    avatar.innerHTML = `<img src="${currentPhotoUrl}" class="w-full h-full object-cover" onclick="openPhotoModal()">`;
                 } else {
-                    avatar.textContent = initials;
+                    avatar.innerHTML = `<span class="text-4xl text-gray-600">${initials}</span>`;
                 }
 
-                // Redirect for password change
                 document.getElementById("facultyChangePass").onclick = () => {
                     window.location.href = "facultyChangePass.html";
                 };
 
             } catch (err) {
-                alert("Failed to load faculty profile.");
+                alert("Failed to load profile!");
             }
         }
 
-        // Upload Profile Photo
         async function uploadProfilePhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const formData = new FormData();
             formData.append("photo", file);
 
-            try {
-                const res = await fetch("/api/profile-photo", {
-                    method: "POST",
-                    body: formData
-                });
+            const res = await fetch("/api/profile-photo", { method: "POST", body: formData });
+            const data = await res.json();
 
-                const data = await res.json();
-                if (data.success) {
-                    alert("Profile photo updated!");
-                    loadFacultyProfile();
-                } else {
-                    alert(data.error || "Upload failed");
-                }
-
-            } catch {
-                alert("Error uploading photo");
-            }
+            if (data.success) loadFacultyProfile();
+            else alert("Failed to upload photo.");
         }
 
-        // Modal Controls
         function openPhotoModal() {
-            if (!currentPhotoUrl) return;
             document.getElementById("modalPhoto").src = currentPhotoUrl;
             document.getElementById("photoModal").classList.remove("hidden");
-            document.body.style.overflow = "hidden";
         }
 
         function closePhotoModal() {
             document.getElementById("photoModal").classList.add("hidden");
-            document.body.style.overflow = "";
         }
 
-        // Send Message
         async function sendMessage() {
-            const email = document.getElementById("email").value.trim();
-            const message = document.getElementById("message").value.trim();
             const loader = document.getElementById("loading");
+            const email = document.getElementById("email").value.trim();
+            const msg = document.getElementById("message").value.trim();
 
-            if (!email || !message) return alert("Please fill in both fields.");
+            if (!email || !msg) return alert("Please fill all fields!");
 
             loader.classList.remove("hidden");
 
-            try {
-                const res = await fetch("/contact", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, message })
-                });
+            const res = await fetch("/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, message: msg })
+            });
 
-                const data = await res.json();
-                alert(data.success ? "Message sent!" : data.error);
-
-                if (data.success) {
-                    document.getElementById("email").value = "";
-                    document.getElementById("message").value = "";
-                }
-
-            } catch {
-                alert("Error sending message");
-            } finally {
-                loader.classList.add("hidden");
-            }
+            const data = await res.json();
+            alert(data.success ? "Message Sent!" : "Failed to send message");
+            loader.classList.add("hidden");
         }
 
         function goHome() {
@@ -228,6 +263,7 @@
 
         document.addEventListener("DOMContentLoaded", loadFacultyProfile);
     </script>
+
 </body>
 
 </html>

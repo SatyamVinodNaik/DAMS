@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Timetable</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-6">
+
+    <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md text-center">
+        <h1 class="text-3xl font-bold mb-4">Your Timetable</h1>
+
+        <div id="message" class="text-red-500 text-lg mb-4"></div>
+
+        <div id="timetableBox" class="hidden">
+            <iframe id="pdfFrame" class="w-full h-[600px] border rounded"></iframe>
+
+            <a id="downloadLink" class="bg-blue-600 text-white px-4 py-2 rounded block mt-4" download>
+                Download Timetable
+            </a>
+        </div>
+    </div>
+
+    <script>
+        async function loadTimetable() {
+            const res = await fetch("/api/timetable/student-view");
+            const data = await res.json();
+
+            if (data.error) {
+                document.getElementById("message").textContent = data.error;
+                return;
+            }
+
+            // Show the timetable
+            document.getElementById("timetableBox").classList.remove("hidden");
+            document.getElementById("pdfFrame").src = data.file;
+            document.getElementById("downloadLink").href = data.file;
+        }
+
+        loadTimetable();
+    </script>
+
+</body>
+
+</html>

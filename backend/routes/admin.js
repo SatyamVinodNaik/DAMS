@@ -268,5 +268,13 @@ router.get("/view-faculty", asyncHandler(async (req, res) => {
     res.json(facultyList);
 }));
 
+router.get("/view-all-ca", asyncHandler(async (req, res) => {
+    const [rows] = await db.execute(
+        `SELECT faculty_id, faculty_name, sem, section FROM class_advisors`
+    );
+    res.json(rows);
+}));
+
+
 
 module.exports = router;
