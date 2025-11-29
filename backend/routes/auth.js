@@ -52,7 +52,12 @@ router.post("/faculty-login", async (req, res) => {
       role: "faculty",
       name: faculty.name,
     };
-    res.json({ success: true, redirect: "/faculty-home" });
+    res.json({
+    success: true,
+    redirect: "/faculty-home",
+    ssn_id: faculty.ssn_id  
+});
+
   } catch {
     res.status(500).json({ success: false, message: "Database error" });
   }

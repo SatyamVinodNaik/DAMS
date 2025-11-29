@@ -71,6 +71,24 @@ router.post("/upload", upload.single("timetable"), async (req, res) => {
         res.status(500).json({ error: "Error uploading timetable" });
     }
 });
+// CHECK IF FACULTY IS CLASS ADVISOR
+router.get("/check-ca", async (req, res) => {
+    if (!req.session.user || req.session.user.role !== "faculty")
+        return res.json({ isCA: false });
+
+    const facultyId = req.session.user.ssn_id;
+
+    const ca = await getCA(facultyId);
+
+    if (!ca) return res.json({ isCA: false });
+
+    res.json({
+        isCA: true,
+        sem: ca.sem,
+        section: ca.section
+    });
+});
+
 
 
 // ======================================================

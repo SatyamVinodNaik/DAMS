@@ -148,10 +148,25 @@
 
                 if (res.ok) {
                     alert(result.message || "Password updated successfully! ✅");
-                    window.location.href = "/faculty-home"; // Kept original redirect, though might want to check if it should be studentHome
+
+                    // Fetch session to detect role
+                    const sessionRes = await fetch("/api/profile");
+                    const sessionData = await sessionRes.json();
+
+                    if (sessionData.role === "student") {
+                        window.location.href = "/student-home";
+                    }
+                    else if (sessionData.role === "faculty") {
+                        window.location.href = "/faculty-home";
+                    }
+                    else {
+                        // fallback
+                        window.location.href = "/";
+                    }
                 } else {
                     alert(result.message || "Failed to update password ❌");
                 }
+
             } catch (err) {
                 console.error(err);
                 alert("Error contacting server");

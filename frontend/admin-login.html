@@ -3,72 +3,239 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .input-group:focus-within label,
+        .input-group:focus-within i {
+            color: #818cf8;
+        }
+
+        /* Animations */
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: 300ms ease-out;
+        }
+
+        .fade-exit-active {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: 300ms ease-in;
+        }
+
+        .hidden-animated {
+            display: none;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 flex justify-center items-center min-h-screen">
-    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-center mb-6 text-indigo-700">Admin Login</h1>
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
 
-        <!-- Step 1: Email + Password -->
-        <form id="loginForm" class="space-y-4">
-            <input type="email" id="email" placeholder="Email" required class="w-full p-2 border rounded-lg">
-            <input type="password" id="password" placeholder="Password" required class="w-full p-2 border rounded-lg">
-            <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Send
-                OTP</button>
+    <!-- Background -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/20 blur-[120px]">
+        </div>
+    </div>
+
+    <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-10 border-t border-slate-700/50">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div
+                class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
+                <i class="fa-solid fa-shield-halved text-2xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white">Admin Portal</h1>
+            <p class="text-slate-400 text-sm">Secure Access Only</p>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="space-y-5">
+            <div class="input-group space-y-2">
+                <label class="text-xs text-slate-400 ml-1">Email Address</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-4 text-slate-500"></i>
+                    <input id="email" type="email" placeholder="admin@example.com" required
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl pl-11 p-3.5 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <div class="input-group space-y-2">
+                <label class="text-xs text-slate-400 ml-1">Password</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-500"></i>
+                    <input id="password" type="password" placeholder="••••••••" required
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl pl-11 p-3.5 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:opacity-90">
+                Send OTP <i class="fa-solid fa-arrow-right"></i>
+            </button>
         </form>
 
-        <!-- Step 2: OTP -->
-        <form id="otpForm" class="space-y-4 hidden">
-            <input type="text" id="otp" placeholder="Enter OTP" required class="w-full p-2 border rounded-lg">
-            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Verify
-                OTP</button>
+        <!-- OTP FORM -->
+        <form id="otpForm" class="space-y-6 hidden-animated">
+            <p class="text-slate-300 text-sm text-center">An OTP has been sent to your email.</p>
+
+            <div class="input-group space-y-2">
+                <label class="text-xs text-slate-400 ml-1">One-Time Password</label>
+                <div class="relative">
+                    <i class="fa-solid fa-key absolute left-4 top-4 text-slate-500"></i>
+                    <input id="otp" type="text" placeholder="Enter 6-digit OTP" required
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl text-center p-3.5 tracking-widest font-mono text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:opacity-90">
+                Verify & Login <i class="fa-solid fa-check-circle"></i>
+            </button>
         </form>
 
-        <p id="message" class="text-center text-sm text-gray-600 mt-4"></p>
+        <!-- Message -->
+        <div id="message" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+
+        <div class="mt-8 pt-6 border-t border-slate-800 text-center">
+            <a href="login.html" class="text-slate-400 text-xs hover:text-slate-200">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Main Login
+            </a>
+        </div>
     </div>
 
     <script>
         const loginForm = document.getElementById("loginForm");
         const otpForm = document.getElementById("otpForm");
         const message = document.getElementById("message");
+
         let email = "";
 
+        //  SHOW MESSAGE
+        function showMessage(msg, type = "error") {
+            message.classList.remove("hidden");
+            message.innerHTML = `
+                <i class="fa-solid ${type === "error" ? "fa-circle-exclamation text-red-400" : "fa-circle-check text-green-400"} mr-1"></i>
+                ${msg}
+            `;
+
+            message.className =
+                type === "error"
+                    ? "mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
+                    : "mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center";
+        }
+
+        // FADE TO OTP FORM
+        function showOtpForm() {
+            loginForm.classList.add("fade-exit-active");
+
+            setTimeout(() => {
+                loginForm.classList.add("hidden-animated");
+
+                otpForm.classList.remove("hidden-animated");
+                otpForm.classList.add("fade-enter");
+
+                setTimeout(() => otpForm.classList.add("fade-enter-active"), 10);
+
+                setTimeout(() => otpForm.classList.remove("fade-enter", "fade-enter-active"), 300);
+            }, 300);
+        }
+
+        // LOGIN SUBMIT
         loginForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            message.classList.add("hidden");
+
+            const btn = loginForm.querySelector("button");
+            const original = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...`;
+
             email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
-            const res = await fetch("/api/admin-login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
+            try {
+                const res = await fetch("/api/admin-login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password }),
+                });
 
-            const data = await res.json();
-            message.textContent = data.message;
-            if (data.success) {
-                loginForm.classList.add("hidden");
-                otpForm.classList.remove("hidden");
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(data.message, "success");
+                    setTimeout(showOtpForm, 1000);
+                } else {
+                    showMessage(data.message || "Login failed");
+                }
+            } catch {
+                showMessage("Server error. Try again.");
             }
+
+            btn.disabled = false;
+            btn.innerHTML = original;
         });
 
+        // OTP SUBMIT
         otpForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            message.classList.add("hidden");
+
+            const btn = otpForm.querySelector("button");
+            const original = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...`;
+
             const otp = document.getElementById("otp").value;
 
-            const res = await fetch("/api/admin-verify-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp }),
-            });
+            try {
+                const res = await fetch("/api/admin-verify-otp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp }),
+                });
 
-            const data = await res.json();
-            message.textContent = data.message;
-            if (data.success) window.location.href = data.redirect;
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage("Verified! Redirecting...", "success");
+                    setTimeout(() => (window.location.href = data.redirect), 1000);
+                } else {
+                    showMessage(data.message || "Invalid OTP");
+                }
+            } catch {
+                showMessage("Server error. Try again.");
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = original;
         });
     </script>
+
 </body>
 
 </html>

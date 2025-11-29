@@ -7,60 +7,139 @@
     <title>Department Login</title>
     <link href="./assets/css/output.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .input-group:focus-within label {
+            color: #818cf8;
+        }
+
+        .input-group:focus-within i {
+            color: #818cf8;
+        }
+    </style>
 </head>
 
-<body class="bg-gradient-to-r from-indigo-500 to-blue-500 min-h-screen flex items-center justify-center p-6">
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
 
-    <div class="bg-white rounded-2xl shadow-lg max-w-md w-full p-6">
-        <h1 class="text-2xl font-bold text-center mb-4">Department Login</h1>
-
-        <!-- Toggle Buttons -->
-        <div class="flex justify-center mb-6">
-            <button id="studentTab" class="w-1/2 py-2 text-white bg-blue-600 rounded-l-lg">Student</button>
-            <button id="facultyTab" class="w-1/2 py-2 bg-gray-200 rounded-r-lg">Faculty</button>
-        </div>
-
-        <!-- Student Login -->
-        <form id="studentLogin">
-            <input id="student-usn" type="text" placeholder="Enter USN" class="w-full p-3 border rounded-lg mb-3"
-                required>
-            <input id="student-pass" type="password" placeholder="Enter Password"
-                class="w-full p-3 border rounded-lg mb-3" required>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
-        </form>
-
-        <!-- Faculty Login -->
-        <form id="facultyLogin" class="hidden">
-            <input id="faculty-ssn" type="text" placeholder="Enter SSN" class="w-full p-3 border rounded-lg mb-3"
-                required>
-            <input id="faculty-pass" type="password" placeholder="Enter Password"
-                class="w-full p-3 border rounded-lg mb-3" required>
-            <button type="submit"
-                class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Login</button>
-        </form>
-
-        <!-- Error message -->
-        <p id="errorMsg" class="text-red-600 text-sm text-center mt-3 hidden"></p>
-
-        <!-- Updated Forgot Password Design -->
-        <div class="mt-6 flex flex-col items-center">
-            <a href="forgotPass.html" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-700 
-                       bg-blue-50 rounded-lg border border-blue-200 shadow-sm overflow-hidden
-                       transition-all duration-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 group">
-
-                <span class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-20 transition-opacity"></span>
-
-                <i class="fa-solid fa-unlock-keyhole mr-2 group-hover:scale-110 transition-transform"></i>
-                Forgot Password?
-            </a>
-
-            <a href="admin-login.html"
-                class="mt-3 text-sm text-red-600 font-semibold hover:underline hover:text-red-700 transition">
-                Admin Panel
-            </a>
+    <!-- Background Gradients -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px]">
         </div>
     </div>
 
+    <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-8 sm:p-10 relative border-t border-slate-700/50">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div
+                class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
+                <i class="fa-solid fa-user-shield text-2xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+            <p class="text-slate-400 text-sm">Please sign in to continue</p>
+        </div>
+
+        <!-- Toggle Switch -->
+        <div class="relative bg-slate-900/50 p-1.5 rounded-xl flex mb-8 border border-slate-800">
+            <div class="absolute inset-y-1.5 w-[calc(50%-6px)] bg-indigo-600 rounded-lg shadow-md transition-all duration-300 ease-out"
+                id="toggle-bg"></div>
+            <button id="studentTab"
+                class="relative z-10 w-1/2 py-2.5 text-sm font-semibold text-white transition-colors duration-300">Student</button>
+            <button id="facultyTab"
+                class="relative z-10 w-1/2 py-2.5 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-300">Faculty</button>
+        </div>
+
+        <!-- Student Login Form -->
+        <form id="studentLogin" class="space-y-5 transition-all duration-300">
+            <div class="input-group space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase tracking-wider ml-1">USN</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-id-card text-slate-500 transition-colors"></i>
+                    </div>
+                    <input id="student-usn" type="text" placeholder="Enter your USN"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block w-full pl-11 p-3.5 placeholder-slate-600 transition-all outline-none"
+                        required>
+                </div>
+            </div>
+
+            <div class="input-group space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-lock text-slate-500 transition-colors"></i>
+                    </div>
+                    <input id="student-pass" type="password" placeholder="••••••••"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block w-full pl-11 p-3.5 placeholder-slate-600 transition-all outline-none"
+                        required>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                Sign In as Student
+            </button>
+        </form>
+
+        <!-- Faculty Login Form -->
+        <form id="facultyLogin" class="space-y-5 hidden transition-all duration-300">
+            <div class="input-group space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase tracking-wider ml-1">SSN ID</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-id-badge text-slate-500 transition-colors"></i>
+                    </div>
+                    <input id="faculty-ssn" type="text" placeholder="Enter your SSN ID"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block w-full pl-11 p-3.5 placeholder-slate-600 transition-all outline-none"
+                        required>
+                </div>
+            </div>
+
+            <div class="input-group space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-lock text-slate-500 transition-colors"></i>
+                    </div>
+                    <input id="faculty-pass" type="password" placeholder="••••••••"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block w-full pl-11 p-3.5 placeholder-slate-600 transition-all outline-none"
+                        required>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                Sign In as Faculty
+            </button>
+        </form>
+
+        <!-- Error message -->
+        <div id="errorMsg"
+            class="hidden mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center font-medium animate-pulse">
+        </div>
+
+        <!-- Footer Links -->
+        <div class="mt-8 pt-6 border-t border-slate-800 flex flex-col items-center gap-4">
+            <a href="forgotPass.html"
+                class="text-slate-400 hover:text-indigo-400 text-sm font-medium transition-colors flex items-center gap-2 group">
+                <i class="fa-solid fa-key group-hover:rotate-12 transition-transform"></i> Forgot Password?
+            </a>
+            <a href="admin-login.html" class="text-slate-500 hover:text-slate-300 text-xs transition-colors">
+                Admin Access
+            </a>
+        </div>
+    </div>
     <script>
         // Tab Switching
         const studentTab = document.getElementById("studentTab");
@@ -114,7 +193,11 @@
 
                 const data = await res.json();
                 if (data.success) {
+                    if (data.ssn_id) {
+                        sessionStorage.setItem("ssn_id", data.ssn_id);
+                    }
                     window.location.href = data.redirect;
+
                 } else {
                     errorMsg.textContent = data.message;
                     errorMsg.classList.remove("hidden");

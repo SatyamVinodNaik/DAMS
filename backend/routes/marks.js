@@ -200,57 +200,6 @@ router.get("/report", async (req, res) => {
 
 // ================== 2️⃣ Get Marks ==================
 // ================== 2️⃣ Get Marks by USN & Semester ==================
-router.get("/:usn", async (req, res) => {
-  try {
-    const usn = req.params.usn;
-    const semester = req.query.semester;
-
-    if (!usn) {
-      return res.status(400).json({ message: "USN is required" });
-    }
-
-    let query = `
-      SELECT 
-        m.subject_code,
-        s.subject_name,
-        m.semester,
-        m.cie1, m.cie2, m.lab, m.assignment, m.\`external\`, 
-        s.credit, m.is_lab,
-        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
-              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) AS internal,
-        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
-              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) AS total,
-        CASE 
-          WHEN (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
-                     ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) >= 20
-               AND m.\`external\` >= 18
-               AND (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
-                         ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) >= 40
-          THEN 'P' ELSE 'F'
-        END AS result
-      FROM marks m
-      JOIN subjects s ON m.subject_code = s.subject_code
-      WHERE m.usn = ?`;
-
-    const params = [usn];
-
-    if (semester) {
-      query += " AND m.semester = ?";
-      params.push(semester);
-    }
-
-    const [rows] = await db.query(query, params);
-
-    if (!rows.length) {
-      return res.status(404).json({ message: "No marks found for this student and semester" });
-    }
-
-    res.json({ usn, semester, subjects: rows });
-  } catch (err) {
-    console.error("🔥 DB Error:", err);
-    res.status(500).json({ message: "Database error", error: err.sqlMessage || err.message });
-  }
-});
 
 
 router.post("/saveSgpaCgpa", async (req, res) => {
@@ -306,6 +255,225 @@ router.post("/saveSgpaCgpa", async (req, res) => {
     } finally {
         conn.release();
     }
+});
+
+
+const asyncHandler = fn => (req, res, next) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
+
+
+router.get("/ca-report", asyncHandler(async (req, res) => {
+    const { faculty_id } = req.query;
+
+    if (!faculty_id)
+        return res.status(400).json({ error: "Faculty ID is required" });
+
+    const [rows] = await db.execute(
+        `
+        SELECT 
+            s.usn,
+            s.name,
+            s.sem,
+            s.section,
+            s.photo_data,
+            s.photo_type,
+            m.subject_code,
+            m.cie1,
+            m.cie2,
+            m.lab,
+            m.assignment,
+            m.external,
+            m.internal,
+            m.total,
+            m.result
+        FROM student s
+        LEFT JOIN marks m 
+            ON s.usn = m.usn 
+            AND s.sem = m.semester
+        WHERE 
+            s.sem = (SELECT sem FROM class_advisors WHERE faculty_id = ?)
+            AND s.section = (SELECT section FROM class_advisors WHERE faculty_id = ?)
+        ORDER BY s.usn, m.subject_code
+        `,
+        [faculty_id, faculty_id]
+    );
+
+    if (!rows.length)
+        return res.status(404).json({ error: "No data found for CA" });
+
+    const reportMap = {};
+
+    rows.forEach(r => {
+        if (!reportMap[r.usn]) {
+            let photoBase64 = null;
+
+            if (r.photo_data && r.photo_type) {
+                const base64 = Buffer.from(r.photo_data).toString("base64");
+                photoBase64 = `data:${r.photo_type};base64,${base64}`;
+            }
+
+            reportMap[r.usn] = {
+                usn: r.usn,
+                name: r.name,
+                sem: r.sem,
+                section: r.section,
+                photo: photoBase64,
+                subjects: []
+            };
+        }
+
+        if (r.subject_code) {
+            reportMap[r.usn].subjects.push({
+                subject_code: r.subject_code,
+                cie1: r.cie1,
+                cie2: r.cie2,
+                lab: r.lab,
+                assignment: r.assignment,
+                external: r.external,
+                internal: r.internal,
+                total: r.total,
+                result: r.result
+            });
+        }
+    });
+
+    res.json(Object.values(reportMap));
+}));
+
+router.get("/ca-report-sort", asyncHandler(async (req, res) => {
+    const { faculty_id, filter } = req.query;
+
+    if (!faculty_id)
+        return res.status(400).json({ error: "Faculty ID is required" });
+
+    const [rows] = await db.execute(
+        `
+        SELECT 
+            s.usn,
+            s.name,
+            s.sem,
+            s.section,
+            s.photo_data,
+            s.photo_type,
+            m.subject_code,
+            m.cie1,
+            m.cie2,
+            m.lab,
+            m.assignment,
+            m.external,
+            m.internal,
+            m.total,
+            m.result
+        FROM student s
+        LEFT JOIN marks m 
+            ON s.usn = m.usn 
+            AND s.sem = m.semester
+        WHERE 
+            s.sem = (SELECT sem FROM class_advisors WHERE faculty_id = ?)
+            AND s.section = (SELECT section FROM class_advisors WHERE faculty_id = ?)
+        ORDER BY s.usn, m.subject_code
+        `,
+        [faculty_id, faculty_id]
+    );
+
+    const reportMap = {};
+
+    rows.forEach(r => {
+        if (!reportMap[r.usn]) {
+            let photoBase64 = null;
+
+            if (r.photo_data && r.photo_type) {
+                const base64 = Buffer.from(r.photo_data).toString("base64");
+                photoBase64 = `data:${r.photo_type};base64,${base64}`;
+            }
+
+            reportMap[r.usn] = {
+                usn: r.usn,
+                name: r.name,
+                sem: r.sem,
+                section: r.section,
+                photo: photoBase64,
+                subjects: []
+            };
+        }
+
+        if (r.subject_code) {
+            reportMap[r.usn].subjects.push({
+                subject_code: r.subject_code,
+                cie1: r.cie1,
+                cie2: r.cie2,
+                lab: r.lab,
+                assignment: r.assignment,
+                external: r.external,
+                internal: r.internal,
+                total: r.total,
+                result: r.result
+            });
+        }
+    });
+
+    let report = Object.values(reportMap);
+
+    // Filters
+    if (filter === "pass") report = report.filter(s => s.subjects.every(x => x.result === "P"));
+    if (filter === "fail") report = report.filter(s => s.subjects.some(x => x.result === "F"));
+    if (filter === "subject")
+        report.forEach(s => s.subjects.sort((a, b) => (a.subject_code || "").localeCompare(b.subject_code || "")));
+
+    res.json(report);
+}));
+
+
+router.get("/:usn", async (req, res) => {
+  try {
+    const usn = req.params.usn;
+    const semester = req.query.semester;
+
+    if (!usn) {
+      return res.status(400).json({ message: "USN is required" });
+    }
+
+    let query = `
+      SELECT 
+        m.subject_code,
+        s.subject_name,
+        m.semester,
+        m.cie1, m.cie2, m.lab, m.assignment, m.\`external\`, 
+        s.credit, m.is_lab,
+        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) AS internal,
+        (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+              ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) AS total,
+        CASE 
+          WHEN (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+                     ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment) >= 20
+               AND m.\`external\` >= 18
+               AND (CASE WHEN m.is_lab = 1 THEN CEIL((m.cie1 + m.cie2)/50*15)
+                         ELSE CEIL((m.cie1 + m.cie2)/50*25) END + m.lab + m.assignment + m.\`external\`) >= 40
+          THEN 'P' ELSE 'F'
+        END AS result
+      FROM marks m
+      JOIN subjects s ON m.subject_code = s.subject_code
+      WHERE m.usn = ?`;
+
+    const params = [usn];
+
+    if (semester) {
+      query += " AND m.semester = ?";
+      params.push(semester);
+    }
+
+    const [rows] = await db.query(query, params);
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "No marks found for this student and semester" });
+    }
+
+    res.json({ usn, semester, subjects: rows });
+  } catch (err) {
+    console.error("🔥 DB Error:", err);
+    res.status(500).json({ message: "Database error", error: err.sqlMessage || err.message });
+  }
 });
 
 

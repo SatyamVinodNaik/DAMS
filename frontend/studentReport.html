@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CA – Student Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .table-row:hover {
+            background-color: #f7f7f7;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gray-900 text-white shadow-md h-20 flex items-center justify-center relative">
+
+        <!-- FIXED BACK BUTTON -->
+        <button onclick="goHome()"
+            class="absolute left-4 bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-6 rounded-full shadow-lg">
+            Back
+        </button>
+
+        <!-- CENTERED TITLE -->
+        <h1 class="text-2xl font-bold">Student Reports</h1>
+
+    </header>
+
+
+    <main class="p-6">
+
+        <!-- Sorting Section -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-center">
+            <h2 class="text-lg font-semibold">Sort Report:</h2>
+
+            <select id="sortFilter" class="px-4 py-2 border rounded-lg">
+                <option value="">All Students</option>
+                <option value="pass">Pass Only</option>
+                <option value="fail">Fail Only</option>
+                <option value="subject">Sort by Subject</option>
+            </select>
+
+            <button onclick="loadReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                Apply
+            </button>
+        </div>
+
+        <!-- Loading Animation -->
+        <div id="loading" class="hidden text-center py-8">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 mx-auto"></div>
+            <p class="text-gray-600 mt-2">Loading Report...</p>
+        </div>
+
+        <!-- Students Container -->
+        <div id="studentContainer" class="space-y-6"></div>
+
+    </main>
+
+    <!-- ========= JS CODE ========= -->
+    <script>
+        // Store login permanently until logout
+        let facultyID = localStorage.getItem("ssn_id");
+
+        if (!facultyID) {
+            // migrate sessionStorage → localStorage if exists
+            const temp = sessionStorage.getItem("ssn_id");
+            if (temp) {
+                localStorage.setItem("ssn_id", temp);
+                facultyID = temp;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("ssn_id");
+            sessionStorage.removeItem("ssn_id");
+            fetch("/api/logout", { method: "POST" });
+            window.location.href = "login.html";
+        }
+
+        async function loadReport() {
+            if (!facultyID) {
+                alert("Faculty session expired. Login again.");
+                return (window.location.href = "login.html");
+            }
+
+            const filter = document.getElementById("sortFilter").value;
+
+            const url = filter
+                ? `/api/marks/ca-report-sort?faculty_id=${facultyID}&filter=${filter}`
+                : `/api/marks/ca-report?faculty_id=${facultyID}`;
+
+            document.getElementById("loading").classList.remove("hidden");
+            document.getElementById("studentContainer").innerHTML = "";
+
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                const data = JSON.parse(text);
+
+                document.getElementById("loading").classList.add("hidden");
+
+                if (data.error || data.message) {
+                    alert(data.error || data.message);
+                    return;
+                }
+
+                renderStudentCards(data);
+
+            } catch (err) {
+                console.error("NOT JSON:", err);
+                alert("Server error. Check console.");
+            }
+        }
+
+        // ========== Render Student Cards ==========
+        function renderStudentCards(report) {
+            const container = document.getElementById("studentContainer");
+            container.innerHTML = "";
+
+            if (!report.length) {
+                container.innerHTML = `
+                    <p class="text-center text-gray-600 text-lg py-10">
+                        No report data found.
+                    </p>`;
+                return;
+            }
+
+            report.forEach(student => {
+                const card = document.createElement("div");
+                card.className =
+                    "bg-white shadow-xl rounded-xl p-6 border border-gray-200";
+
+                const photoURL = student.photo
+                    ? student.photo
+                    : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+                card.innerHTML = `
+    <div class="flex justify-between items-center">
+        
+        <!-- LEFT SIDE: PHOTO + DETAILS -->
+        <div class="flex items-center gap-4">
+            <img src="${photoURL}" 
+                 alt="Student Photo"
+                 class="w-16 h-16 rounded-full object-cover shadow border" />
+
+            <div>
+                <h3 class="text-xl font-bold">${student.name}</h3>
+                <p class="text-gray-600">USN: ${student.usn}</p>
+                <p class="text-gray-500 text-sm">
+                    Section: ${student.section} | Sem: ${student.sem}
+                </p>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: BUTTON -->
+        <button onclick="toggleSubjects('${student.usn}')"
+            class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-lg">
+            View Subjects
+        </button>
+    </div>
+
+    <!-- SUBJECT DETAILS (HIDDEN BY DEFAULT) -->
+    <div id="subjects-${student.usn}" class="hidden mt-4">
+        ${renderSubjectTable(student.subjects)}
+    </div>
+`;
+
+
+                container.appendChild(card);
+            });
+        }
+
+        // ========== Render Subjects Table ==========
+        function renderSubjectTable(subjects) {
+            if (!subjects || subjects.length === 0) {
+                return `<p class="text-gray-500 text-sm mt-3">No marks available</p>`;
+            }
+
+            return `
+                <div class="overflow-x-auto mt-3 rounded-lg shadow">
+                    <table class="w-full text-sm border-collapse">
+                        <thead class="bg-gray-800 text-white text-center">
+                            <tr>
+                                <th class="p-2 border">Code</th>
+                                <th class="p-2 border">CIE1</th>
+                                <th class="p-2 border">CIE2</th>
+                                <th class="p-2 border">Lab</th>
+                                <th class="p-2 border">Assign</th>
+                                <th class="p-2 border">External</th>
+                                <th class="p-2 border">Internal</th>
+                                <th class="p-2 border">Total</th>
+                                <th class="p-2 border">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${subjects
+                    .map(
+                        s => `
+                            <tr class="border table-row text-center">
+                                <td class="p-2 border font-semibold">${s.subject_code}</td>
+                                <td class="p-2 border">${s.cie1}</td>
+                                <td class="p-2 border">${s.cie2}</td>
+                                <td class="p-2 border">${s.lab}</td>
+                                <td class="p-2 border">${s.assignment}</td>
+                                <td class="p-2 border">${s.external}</td>
+                                <td class="p-2 border font-bold">${s.internal}</td>
+                                <td class="p-2 border font-bold">${s.total}</td>
+                                <td class="p-2 border font-bold ${s.result === "P"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }">${s.result}</td>
+                            </tr>`
+                    )
+                    .join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function toggleSubjects(usn) {
+            document.getElementById(`subjects-${usn}`).classList.toggle("hidden");
+        }
+
+        // Load on page open
+        document.addEventListener("DOMContentLoaded", loadReport);
+        function goHome() {
+            window.location.href = "facultyHome.html";
+        }
+    </script>
+
+</body>
+
+</html>

@@ -3,59 +3,175 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password</title>
-    <link href="./assets/css/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .input-group:focus-within label,
+        .input-group:focus-within i {
+            color: #818cf8;
+        }
+
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: 300ms ease-out;
+        }
+
+        .fade-exit-active {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: 300ms ease-in;
+        }
+
+        .hidden-animated {
+            display: none;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
 
-    <div class="bg-white shadow-lg rounded-4xl p-6 lg:w-96 w-150 h-100">
-        <h2 class="text-5xl font-bold mb-15 text-center">Forgot Password</h2>
+    <!-- Background blur blobs -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[20%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px]"></div>
+    </div>
 
-        <!-- Step 1: Enter Email -->
+    <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-10">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
+                <i class="fa-solid fa-key text-2xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white">Account Recovery</h1>
+            <p class="text-slate-400 text-sm">Reset your password securely</p>
+        </div>
+
+        <!-- Step 1 -->
         <div id="step1">
-            <label class="block mb-6 text-3xl">Enter Registered Email:</label>
-            <input id="email" type="email" class="w-full border px-7 py-5 rounded-lg mb-4 text-3xl"
-                placeholder="you@gmail.com" required>
+            <div class="input-group space-y-2 mb-6">
+                <label class="text-xs text-slate-400 ml-1">Registered Email</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-4 text-slate-500"></i>
+                    <input id="email" type="email" placeholder="you@example.com"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl pl-11 p-3.5 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
             <button id="sendBtn" onclick="sendOtp()"
-                class="w-50 ml-45 mt-8 h-15 bg-blue-600 text-white text-2xl py-2 rounded-lg hover:bg-blue-700 flex justify-center items-center">
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex gap-2 justify-center items-center hover:opacity-90">
                 <span id="sendBtnText">Send OTP</span>
-                <svg id="loadingSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                <i id="sendIcon" class="fa-solid fa-paper-plane"></i>
+                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+                    <path class="opacity-75" d="M4 12a8 8 0 018-8"></path>
                 </svg>
             </button>
         </div>
 
-        <!-- Step 2: Enter OTP + New Password -->
-        <div id="step2" class="bg-gray-100 p-5 text-2xl hidden w-150">
-            <label class="block mb-2">Enter OTP:</label>
-            <input id="otp" type="text" class="w-full border px-3 py-2 rounded-lg mb-4" placeholder="6-digit OTP"
-                required>
+        <!-- Step 2 -->
+        <div id="step2" class="hidden-animated space-y-5">
 
-            <label class="block mb-4">Enter New Password:</label>
-            <input id="newPassword" type="password" class="w-full border px-3 py-2 rounded-lg mb-6"
-                placeholder="New Password" required>
+            <p class="text-slate-300 text-sm text-center">Enter the OTP sent to your email.</p>
 
-            <button onclick="resetPassword()"
-                class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Reset Password</button>
+            <div class="input-group space-y-2">
+                <label class="text-xs text-slate-400 ml-1">OTP</label>
+                <div class="relative">
+                    <i class="fa-solid fa-shield-halved absolute left-4 top-4 text-slate-500"></i>
+                    <input id="otp" type="text" placeholder="6-digit OTP"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl text-center p-3.5 tracking-widest">
+                </div>
+            </div>
+
+            <div class="input-group space-y-2">
+                <label class="text-xs text-slate-400 ml-1">New Password</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-500"></i>
+                    <input id="newPassword" type="password" placeholder="Enter new password"
+                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl pl-11 p-3.5">
+                </div>
+            </div>
+
+            <button id="resetBtn" onclick="resetPassword()"
+                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex gap-2 justify-center items-center hover:opacity-90">
+                <span id="resetBtnText">Reset Password</span>
+                <i id="resetIcon" class="fa-solid fa-check-circle"></i>
+                <svg id="resetSpinner" class="hidden animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+                    <path class="opacity-75" d="M4 12a8 8 0 018-8"></path>
+                </svg>
+            </button>
         </div>
 
-        <p id="message" class="mt-4 text-center text-sm font-semibold"></p>
+        <!-- Message -->
+        <div id="message" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+
+        <div class="text-center mt-8">
+            <a href="login.html" class="text-slate-400 text-xs hover:text-slate-200">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Login
+            </a>
+        </div>
     </div>
 
     <script>
+        const message = document.getElementById("message");
+
+        function showMessage(msg, type = "error") {
+            message.classList.remove("hidden");
+            message.innerHTML = `<i class="fa-solid ${type === "error" ? "fa-circle-exclamation text-red-400" : "fa-circle-check text-green-400"} mr-1"></i> ${msg}`;
+
+            message.className =
+                type === "error"
+                    ? "mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
+                    : "mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center";
+        }
+
+        function showStep2() {
+            const step1 = document.getElementById("step1");
+            const step2 = document.getElementById("step2");
+
+            step1.classList.add("fade-exit-active");
+
+            setTimeout(() => {
+                step1.classList.add("hidden-animated");
+                step2.classList.remove("hidden-animated");
+                step2.classList.add("fade-enter");
+
+                setTimeout(() => step2.classList.add("fade-enter-active"), 10);
+
+                setTimeout(() => step2.classList.remove("fade-enter", "fade-enter-active"), 300);
+            }, 300);
+        }
+
         async function sendOtp() {
             const email = document.getElementById("email").value;
-            const sendBtn = document.getElementById("sendBtn");
-            const sendBtnText = document.getElementById("sendBtnText");
-            const spinner = document.getElementById("loadingSpinner");
+            if (!email) return showMessage("Please enter your email.");
 
-            // Show loading spinner
-            sendBtn.disabled = true;
-            sendBtnText.textContent = "Sending...";
-            spinner.classList.remove("hidden");
+            const btn = document.getElementById("sendBtn");
+            btn.disabled = true;
+            document.getElementById("sendBtnText").textContent = "Sending...";
+            document.getElementById("sendIcon").classList.add("hidden");
+            document.getElementById("loadingSpinner").classList.remove("hidden");
 
             try {
                 const res = await fetch("/api/forgot-password", {
@@ -65,20 +181,20 @@
                 });
 
                 const data = await res.json();
-                document.getElementById("message").innerText = data.message;
-
                 if (res.ok) {
-                    document.getElementById("step1").classList.add("hidden");
-                    document.getElementById("step2").classList.remove("hidden");
+                    showMessage(data.message, "success");
+                    setTimeout(showStep2, 1000);
+                } else {
+                    showMessage(data.message, "error");
                 }
-            } catch (err) {
-                document.getElementById("message").innerText = "❌ Error sending OTP. Try again.";
+            } catch {
+                showMessage("Server error. Try again.");
             }
 
-            // Reset button
-            sendBtn.disabled = false;
-            sendBtnText.textContent = "Send OTP";
-            spinner.classList.add("hidden");
+            btn.disabled = false;
+            document.getElementById("sendBtnText").textContent = "Send OTP";
+            document.getElementById("sendIcon").classList.remove("hidden");
+            document.getElementById("loadingSpinner").classList.add("hidden");
         }
 
         async function resetPassword() {
@@ -86,20 +202,37 @@
             const otp = document.getElementById("otp").value;
             const newPassword = document.getElementById("newPassword").value;
 
-            const res = await fetch("/api/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp, newPassword })
-            });
+            if (!otp || !newPassword)
+                return showMessage("Please fill in all fields.");
 
-            const data = await res.json();
-            document.getElementById("message").innerText = data.message;
+            const btn = document.getElementById("resetBtn");
+            btn.disabled = true;
+            document.getElementById("resetBtnText").textContent = "Resetting...";
+            document.getElementById("resetIcon").classList.add("hidden");
+            document.getElementById("resetSpinner").classList.remove("hidden");
 
-            if (res.ok) {
-                setTimeout(() => {
-                    window.location.href = "/"; // redirect to login page
-                }, 2000);
+            try {
+                const res = await fetch("/api/reset-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp, newPassword })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage(data.message, "success");
+                    setTimeout(() => (window.location.href = "login.html"), 2000);
+                } else {
+                    showMessage(data.message);
+                }
+            } catch {
+                showMessage("Server error. Try again.");
             }
+
+            btn.disabled = false;
+            document.getElementById("resetBtnText").textContent = "Reset Password";
+            document.getElementById("resetIcon").classList.remove("hidden");
+            document.getElementById("resetSpinner").classList.add("hidden");
         }
     </script>
 

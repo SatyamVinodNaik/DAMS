@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Timetable</title>
+    <link href="./assets/css/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-6">
+    <button onclick="goHome()"
+        class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6  m-2 rounded-full shadow-lg">Back</button>
+
+
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg mt-10">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">
+            Upload Timetable (Class Advisor Only)
+        </h1>
+
+        <!-- Info Section -->
+        <p id="classInfo" class="text-center text-gray-600 mb-4">
+            Checking your Class Advisor status...
+        </p>
+
+        <form id="timetableForm" class="space-y-5">
+            <!-- File Input -->
+            <div>
+                <label class="block mb-2 font-semibold">Select Timetable PDF:</label>
+                <input type="file" name="timetable" accept="application/pdf" class="border p-2 w-full rounded" required>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-blue-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition">
+                Upload Timetable
+            </button>
+        </form>
+
+        <!-- Result message -->
+        <div id="message" class="mt-6 text-center font-bold"></div>
+    </div>
+
+    <script>
+        // -------------------- Load CA Info (from backend session) --------------------
+        async function loadCAstatus() {
+            try {
+                const res = await fetch("/api/profile");
+                const data = await res.json();
+
+                if (data.error) {
+                    document.getElementById("classInfo").textContent =
+                        "Unable to verify role.";
+                    return;
+                }
+
+                if (data.role !== "faculty") {
+                    document.getElementById("classInfo").textContent =
+                        "❌ You are not a faculty member.";
+                    document.getElementById("timetableForm").style.display = "none";
+                    return;
+                }
+
+                // Ask backend if user is CA
+                const caRes = await fetch(`/api/check-ca`);
+                const caData = await caRes.json();
+
+                if (!caData.isCA) {
+                    document.getElementById("classInfo").innerHTML =
+                        "<span class='text-red-600 font-bold'>❌ You are not a Class Advisor. Upload not allowed.</span>";
+                    document.getElementById("timetableForm").style.display = "none";
+                    return;
+                }
+
+                document.getElementById("classInfo").innerHTML =
+                    `<span class="text-green-700 font-semibold">✔ You are Class Advisor for <b>${caData.sem} ${caData.section}</b></span>`;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("classInfo").textContent =
+                    "Error checking CA role.";
+            }
+        }
+
+
+        // -------------------- Upload Timetable --------------------
+        document.getElementById("timetableForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append("timetable", e.target.timetable.files[0]);
+
+            try {
+                const res = await fetch("/api/timetable/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await res.json();
+
+                const msg = document.getElementById("message");
+                msg.textContent = result.message || result.error;
+                msg.style.color = result.message ? "green" : "red";
+
+                if (result.message) {
+                    setTimeout(() => location.reload(), 1200);
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("message").textContent = "❌ Upload failed.";
+                document.getElementById("message").style.color = "red";
+            }
+        });
+
+        loadCAstatus();
+
+        function goHome() {
+            window.location.href = "facultyHome.html";
+        }
+
+    </script>
+
+</body>
+
+</html>
